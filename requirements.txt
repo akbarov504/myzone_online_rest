@@ -1,0 +1,13 @@
+flask
+flask-restful
+flask-sqlalchemy
+flask-migrate
+flask-jwt-extended
+flask-cors
+flask-limiter
+flask-bcrypt
+flasgger
+psycopg2-binary
+google-api-python-client 
+google-auth 
+google-auth-oauthlib
