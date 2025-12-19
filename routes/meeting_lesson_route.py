@@ -19,8 +19,7 @@ time_zone = pytz.timezone("Asia/Tashkent")
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 SERVICE_ACCOUNT_FILE = Path(__file__).parent.parent.joinpath("service_account.json")
 
-# credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES, subject="akbarovakbar888@gmail.com")
-credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES, subject="info@myzone-edu.uz")
 service = build('calendar', 'v3', credentials=credentials)
 
 meeting_lesson_bp = Blueprint("meeting_lesson", __name__, url_prefix="/api/meeting_lesson")
@@ -147,8 +146,7 @@ class MeetingLessonStartResource(Resource):
 
         created_event = service.events().insert(calendarId='primary', body=event, conferenceDataVersion=1).execute()
         calendar_event_id = created_event["id"]
-        meet_link = created_event['htmlLink']
-        print(created_event)
+        meet_link = created_event['hangoutLink']
 
         new_meeting_lesson = MeetingLesson(found_teacher.id, found_course.id, meet_link, "ACTIVE", start_time, end_time, calendar_event_id)
         db.session.add(new_meeting_lesson)

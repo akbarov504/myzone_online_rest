@@ -67,4 +67,4 @@ with app.app_context():
     super_admin_create()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(port=8080)

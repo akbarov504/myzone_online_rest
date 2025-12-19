@@ -186,7 +186,7 @@ class CourseModuleListCreateResource(Resource):
         if not found_course:
             return get_response("Course not found", None, 404), 404
 
-        course_module_list = CourseModule.query.filter_by(course_id=found_course.id).order_by(CourseModule.created_at.desc()).all()
+        course_module_list = CourseModule.query.filter_by(course_id=found_course.id).order_by(CourseModule.order.asc()).all()
         result_course_module_list = [CourseModule.to_dict(course_module) for course_module in course_module_list]
         return get_response("Course Module List", result_course_module_list, 200), 200
 
