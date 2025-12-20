@@ -179,7 +179,7 @@ class UserResource(Resource):
         return get_response("Successfully updated user", None, 200), 200
 
 class UserListCreateResource(Resource):
-    decorators = [role_required(["ADMIN"])]
+    decorators = [role_required(["ADMIN", "TEACHER", "STUDENT", "SUPPORT"])]
 
     def get(self):
         """Student List API
