@@ -32,9 +32,9 @@ user_update_parse.add_argument("is_active", type=bool)
 user_bp = Blueprint("user", __name__, url_prefix="/api/user")
 api = Api(user_bp)
 
-class UserResource(Resource):
-    decorators = [role_required(["ADMIN"])]
-    
+class UserResource(Resource):    
+
+    @role_required(["ADMIN", "TEACHER", "STUDENT", "SUPPORT"])
     def get(self, user_id):
         """User Get API
         Path - /api/user/<user_id>
@@ -65,6 +65,7 @@ class UserResource(Resource):
         
         return get_response("User successfully found", User.to_dict(user), 200), 200
 
+    @role_required(["ADMIN"])
     def delete(self, user_id):
         """User Delete API
         Path - /api/user/<user_id>
@@ -97,6 +98,7 @@ class UserResource(Resource):
         db.session.commit()
         return get_response("Successfully deleted user", None, 200), 200
     
+    @role_required(["ADMIN"])
     def patch(self, user_id):
         """User Update API
         Path - /api/user/<user_id>
@@ -179,7 +181,7 @@ class UserResource(Resource):
         return get_response("Successfully updated user", None, 200), 200
 
 class UserListCreateResource(Resource):
-    decorators = [role_required(["ADMIN", "TEACHER", "STUDENT", "SUPPORT"])]
+    decorators = [role_required(["ADMIN", "SUPPORT"])]
 
     def get(self):
         """Student List API
