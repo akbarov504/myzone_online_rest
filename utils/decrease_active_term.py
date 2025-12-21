@@ -1,9 +1,13 @@
-from models import db
-from app import create_app
-from models.user import User
+import os
+import sys
 from datetime import datetime
 
-app = create_app()
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
+
+from models import db
+from app import app
+from models.user import User
 
 with app.app_context():
     User.query.filter(
