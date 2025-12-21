@@ -208,7 +208,7 @@ class SupportTicketShowActionResource(Resource):
                 description: Return a Ticket List
         """
         result_support_ticket_list = []
-        support_ticket_list = SupportTicket.query.all()
+        support_ticket_list = SupportTicket.query.order_by(SupportTicket.created_at.desc()).all()
 
         for support_ticket in support_ticket_list:
             found_student = User.query.filter_by(id=support_ticket.student_id, role="STUDENT").first()

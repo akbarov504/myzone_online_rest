@@ -231,7 +231,7 @@ class LessonListCreateResource(Resource):
         if not found_course_module:
             return get_response("Course Module not found", None, 404), 404
 
-        lesson_list = Lesson.query.filter_by(course_module_id=found_course_module.id).order_by(Lesson.created_at.desc()).all()
+        lesson_list = Lesson.query.filter_by(course_module_id=found_course_module.id).order_by(Lesson.order.asc()).all()
         result_lesson_list = []
 
         username = get_jwt_identity()
