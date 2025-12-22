@@ -10,6 +10,13 @@ from flask_bcrypt import generate_password_hash
 from flask_restful import Api, Resource, reqparse
 from models.lesson_test_progress import LessonTestProgress
 
+from models.course_save import CourseSave
+from models.support_ticket import SupportTicket
+from models.lesson_student import LessonStudent
+from models.meeting_lesson import MeetingLesson
+from models.support_message import SupportMessage
+from models.notification_user import NotificationUser
+
 user_create_parse = reqparse.RequestParser()
 user_create_parse.add_argument("full_name", type=str, required=True, help="Full Name cannot be blank")
 user_create_parse.add_argument("phone_number", type=str, required=True, help="Phone Number cannot be blank")
@@ -93,6 +100,34 @@ class UserResource(Resource):
         user = User.query.filter_by(id=user_id).first()
         if not user:
             return get_response("User not found", None, 404), 404
+        
+        course_save_list = CourseSave.query.filter_by(user_id=user.id).all()
+        for course_save in course_save_list:
+            db.session.delete(course_save)
+
+        lesson_student_list = LessonStudent.query.filter_by(student_id=user.id).all()
+        for lesson_student in lesson_student_list:
+            db.session.delete(lesson_student)
+
+        lesson_test_progress_list = LessonTestProgress.query.filter_by(student_id=user.id).all()
+        for lesson_test_progress in lesson_test_progress_list:
+            db.session.delete(lesson_test_progress)
+        
+        meeting_lesson_list = MeetingLesson.query.filter_by(teacher_id=user.id).all()
+        for meeting_lesson in meeting_lesson_list:
+            db.session.delete(meeting_lesson)
+
+        support_message_list = SupportMessage.query.filter_by(sender_id=user.id).all()
+        for support_message in support_message_list:
+            db.session.delete(support_message)
+
+        support_ticket_list = SupportTicket.query.filter_by(student_id=user.id).all()
+        for support_ticket in support_ticket_list:
+            db.session.delete(support_ticket)
+        
+        notification_user_list = NotificationUser.query.filter_by(user_id=user.id).all()
+        for notification_user in notification_user_list:
+            db.session.delete(notification_user)
         
         db.session.delete(user)
         db.session.commit()
