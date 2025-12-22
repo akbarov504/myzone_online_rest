@@ -1,11 +1,13 @@
 import random
 from models import db
+from datetime import date
 from flask import Blueprint
 from models.user import User
 from models.lesson import Lesson
 from utils.utils import get_response
 from models.lesson_test import LessonTest
 from utils.decorators import role_required
+from models.lesson_student import LessonStudent
 from flask_restful import Api, Resource, reqparse
 from models.lesson_test_progress import LessonTestProgress
 
@@ -446,6 +448,10 @@ class LessonTestFinishActionResource(Resource):
             if next_lesson:
                 new_progress = LessonTestProgress(found_student.id, next_lesson.id, False, 0)
                 db.session.add(new_progress)
+                
+                today_date = date.today()
+                new_lesson_student = LessonStudent(found_student.id, today_date)
+                db.session.add(new_lesson_student)
         
         db.session.add(progress)
         db.session.commit()

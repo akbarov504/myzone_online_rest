@@ -1,10 +1,12 @@
 from models import db
+from datetime import date
 from flask import Blueprint
 from models.user import User
 from models.lesson import Lesson
 from utils.utils import get_response
 from utils.decorators import role_required
 from models.course_module import CourseModule
+from models.lesson_student import LessonStudent
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Api, Resource, reqparse
 from models.lesson_test_progress import LessonTestProgress
@@ -67,6 +69,11 @@ class LessonResource(Resource):
         found_user = User.query.filter_by(username=username, is_active=True).first()
         if not found_user:
             return get_response("User not found", None, 404), 404
+        
+        today_date = date.today()
+        today_lesson_student = LessonStudent.query.filter_by(student_id=found_user.id, date=today_date).first()
+        if today_lesson_student:
+            return get_response("You have already accessed lessons today", None, 404), 404
         
         dict_lesson = Lesson.to_dict(lesson)
         lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, lesson_id=lesson.id).first()
@@ -239,6 +246,11 @@ class LessonListCreateResource(Resource):
         if not found_user:
             return get_response("User not found", None, 404), 404
         
+        today_date = date.today()
+        today_lesson_student = LessonStudent.query.filter_by(student_id=found_user.id, date=today_date).first()
+        if today_lesson_student:
+            return get_response("You have already accessed lessons today", None, 404), 404
+
         for lesson in lesson_list:
             dict_lesson = Lesson.to_dict(lesson)
 
