@@ -72,11 +72,16 @@ class LessonResource(Resource):
         
         today_date = date.today()
         today_lesson_student = LessonStudent.query.filter_by(student_id=found_user.id, date=today_date).first()
-        if today_lesson_student:
-            return get_response("You have already accessed lessons today", None, 404), 404
+
+        lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, lesson_id=lesson.id).first()
+        if lesson_test_progress:
+            if today_lesson_student and lesson_test_progress.is_completed == False and lesson.order > 1:
+                return get_response("You have already accessed lessons today", None, 404), 404
+        else:
+            if today_lesson_student and lesson.order > 1:
+                return get_response("You have already accessed lessons today", None, 404), 404
         
         dict_lesson = Lesson.to_dict(lesson)
-        lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, lesson_id=lesson.id).first()
         
         if not lesson_test_progress:
             dict_lesson_test_progress = None
@@ -248,13 +253,18 @@ class LessonListCreateResource(Resource):
         
         today_date = date.today()
         today_lesson_student = LessonStudent.query.filter_by(student_id=found_user.id, date=today_date).first()
-        if today_lesson_student:
-            return get_response("You have already accessed lessons today", None, 404), 404
 
         for lesson in lesson_list:
-            dict_lesson = Lesson.to_dict(lesson)
-
             lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, lesson_id=lesson.id).first()
+            
+            if lesson_test_progress:
+                if today_lesson_student and lesson_test_progress.is_completed == False and lesson.order > 1:
+                    continue
+            else:
+                if today_lesson_student and lesson.order > 1:
+                    continue
+
+            dict_lesson = Lesson.to_dict(lesson)
 
             if not lesson_test_progress:
                 dict_lesson_test_progress = None
