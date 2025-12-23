@@ -1,6 +1,3 @@
-import eventlet.hubs
-eventlet.hubs.use_hub("eventlet.hubs.asyncio")
-
 from flask import Flask
 from flask_cors import CORS
 from flasgger import Swagger
@@ -44,7 +41,7 @@ Swagger(app, template={
 })
 CORS(app)
 Limiter(app=app, key_func=get_remote_address, default_limits=["3000 per day", "500 per hour"])
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent", logger=True, engineio_logger=True)
 
 db.init_app(app)
 bcrypt.init_app(app)
