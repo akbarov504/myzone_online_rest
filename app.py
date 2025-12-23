@@ -1,10 +1,14 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask
 from flask_cors import CORS
 from flasgger import Swagger
 from flask_limiter import Limiter
+from flask_socketio import SocketIO
 from utils.utils import super_admin_create
+from models import db, bcrypt, jwt, migrate
 from flask_limiter.util import get_remote_address
-from models import db, bcrypt, jwt, migrate, socketio
 
 from routes.auth_route import auth_bp
 from routes.user_route import user_bp
@@ -40,12 +44,12 @@ Swagger(app, template={
 })
 CORS(app)
 Limiter(app=app, key_func=get_remote_address, default_limits=["3000 per day", "500 per hour"])
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 db.init_app(app)
 bcrypt.init_app(app)
 jwt.init_app(app)
 migrate.init_app(app, db)
-socketio.init_app(app)
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)

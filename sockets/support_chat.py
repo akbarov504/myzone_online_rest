@@ -6,6 +6,10 @@ from flask_jwt_extended import decode_token
 from models.support_ticket import SupportTicket
 from models.support_message import SupportMessage
 
+@socketio.on('connect')
+def connect():
+    print("✅ SOCKET CONNECTED")
+
 # ---------------- JOIN ROOM ----------------
 @socketio.on("join_ticket")
 def join_ticket(data):
