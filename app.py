@@ -1,5 +1,5 @@
-import eventlet
-eventlet.monkey_patch()
+import eventlet.hubs
+eventlet.hubs.use_hub("eventlet.hubs.asyncio")
 
 from flask import Flask
 from flask_cors import CORS
