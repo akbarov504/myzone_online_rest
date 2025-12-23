@@ -135,9 +135,26 @@ class SupportTicketListCreateResource(Resource):
         if not found_student:
             return get_response("Student not found", None, 404), 404
         
+        result_dict = {}
+        result_unread_count = 0
+        result_support_ticket_list = []
+
         support_ticket_list = SupportTicket.query.filter_by(student_id=found_student.id).order_by(SupportTicket.created_at.desc()).all()
-        result_support_ticket_list = [SupportTicket.to_dict(support_ticket) for support_ticket in support_ticket_list]
-        return get_response("Support Ticket List", result_support_ticket_list, 200), 200
+        for support_ticket in support_ticket_list:
+            unread_count = SupportMessage.query.filter(
+                SupportMessage.ticket_id == support_ticket.id,
+                SupportMessage.sender_role == "SUPPORT",
+                SupportMessage.is_read == False
+            ).count()
+            result_unread_count += unread_count
+
+            dict_support_ticket = SupportTicket.to_dict(support_ticket)
+            result_support_ticket_list.append(dict_support_ticket)
+        
+        result_dict.update({"unread_count": result_unread_count})
+        result_dict.update({"tickets": result_support_ticket_list})
+
+        return get_response("Support Ticket List", result_dict, 200), 200
 
     def post(self):
         """Support Ticket Create API
@@ -207,11 +224,20 @@ class SupportTicketShowActionResource(Resource):
             200:
                 description: Return a Ticket List
         """
+        result_dict = {}
+        result_unread_count = 0
         result_support_ticket_list = []
         support_ticket_list = SupportTicket.query.order_by(SupportTicket.created_at.desc()).all()
 
         for support_ticket in support_ticket_list:
             found_student = User.query.filter_by(id=support_ticket.student_id, role="STUDENT").first()
+
+            unread_count = SupportMessage.query.filter(
+                SupportMessage.ticket_id == support_ticket.id,
+                SupportMessage.sender_role == "STUDENT",
+                SupportMessage.is_read == False
+            ).count()
+            result_unread_count += unread_count
 
             if found_student:
                 dict_support_ticket = SupportTicket.to_dict(support_ticket)
@@ -224,8 +250,10 @@ class SupportTicketShowActionResource(Resource):
 
                 dict_support_ticket.update({"student": None})
                 result_support_ticket_list.append(dict_support_ticket)
-
-        return get_response("Support Ticket List", result_support_ticket_list, 200), 200
+        
+        result_dict.update({"unread_count": result_unread_count})
+        result_dict.update({"tickets": result_support_ticket_list})
+        return get_response("Support Ticket List", result_dict, 200), 200
 
 class SupportTicketReplyActionResource(Resource):
     decorators = [role_required(["SUPPORT"])]
