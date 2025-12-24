@@ -19,7 +19,7 @@ def disconnect():
 def join_ticket(data):
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+        found_user = User.query.filter_by(username=decoded["username"]).first()
        
         if not found_user:
             emit("error", {"message": "User not found"})
@@ -49,6 +49,7 @@ def join_ticket(data):
     except Exception as e:
         print(f"❌ Error in join_ticket: {str(e)}")
         emit("error", {"message": "Failed to join ticket"})
+
 # ---------------- LEAVE ROOM ----------------
 @socketio.on("leave_ticket")
 def leave_ticket(data):
@@ -60,6 +61,7 @@ def leave_ticket(data):
         print(f"✅ User left {room}")
     except Exception as e:
         print(f"❌ Error in leave_ticket: {str(e)}")
+
 # ---------------- SEND MESSAGE ----------------
 @socketio.on("send_message")
 def send_message(data):
@@ -72,7 +74,7 @@ def send_message(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+        found_user = User.query.filter_by(username=decoded["username"]).first()
        
         if not found_user:
             emit("error", {"message": "User not found"})
@@ -124,6 +126,7 @@ def send_message(data):
     except Exception as e:
         print(f"❌ Error in send_message: {str(e)}")
         emit("error", {"message": "Failed to send message"})
+
 # ---------------- MARK AS READ ----------------
 @socketio.on("mark_as_read")
 def mark_as_read(data):
@@ -135,7 +138,7 @@ def mark_as_read(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+        found_user = User.query.filter_by(username=decoded["username"]).first()
        
         if not found_user:
             return
@@ -161,6 +164,7 @@ def mark_as_read(data):
         )
     except Exception as e:
         print(f"❌ Error in mark_as_read: {str(e)}")
+
 # ---------------- TYPING INDICATOR ----------------
 @socketio.on("typing")
 def typing(data):
@@ -172,7 +176,7 @@ def typing(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+        found_user = User.query.filter_by(username=decoded["username"]).first()
        
         if not found_user:
             return
@@ -192,6 +196,7 @@ def typing(data):
         )
     except Exception as e:
         print(f"❌ Error in typing: {str(e)}")
+
 @socketio.on("stop_typing")
 def stop_typing(data):
     """
@@ -202,7 +207,7 @@ def stop_typing(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+        found_user = User.query.filter_by(username=decoded["username"]).first()
        
         if not found_user:
             return
@@ -221,6 +226,7 @@ def stop_typing(data):
         )
     except Exception as e:
         print(f"❌ Error in stop_typing: {str(e)}")
+
 # ---------------- TICKET STATUS CHANGE ----------------
 @socketio.on("close_ticket")
 def close_ticket_socket(data):
@@ -232,7 +238,7 @@ def close_ticket_socket(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+        found_user = User.query.filter_by(username=decoded["username"]).first()
        
         if not found_user or found_user.role != "SUPPORT":
             emit("error", {"message": "Access denied"})
