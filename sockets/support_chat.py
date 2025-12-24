@@ -19,41 +19,36 @@ def disconnect():
 def join_ticket(data):
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["username"]).first()
-        
+        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+       
         if not found_user:
             emit("error", {"message": "User not found"})
             return
-
         ticket_id = data["ticket_id"]
         found_ticket = SupportTicket.query.filter_by(id=ticket_id).first()
-        
+       
         if not found_ticket:
             emit("error", {"message": "Ticket not found"})
             return
-
         # STUDENT faqat o'z ticketlariga kirishi mumkin
         # TUZATISH: student_id string bo'lishi mumkin, shuning uchun str() ga o'tkazamiz
         if found_user.role == "STUDENT" and str(found_ticket.student_id) != str(found_user.id):
             emit("error", {"message": "Access denied"})
             return
-
         room = f"ticket_{ticket_id}"
         join_room(room)
-        
+       
         emit("joined_ticket", {
             "ticket_id": ticket_id,
             "room": room,
             "user_id": str(found_user.id),
             "role": found_user.role
         })
-        
+       
         print(f"✅ User {found_user.username} joined {room}")
-
     except Exception as e:
         print(f"❌ Error in join_ticket: {str(e)}")
         emit("error", {"message": "Failed to join ticket"})
-
 # ---------------- LEAVE ROOM ----------------
 @socketio.on("leave_ticket")
 def leave_ticket(data):
@@ -65,7 +60,6 @@ def leave_ticket(data):
         print(f"✅ User left {room}")
     except Exception as e:
         print(f"❌ Error in leave_ticket: {str(e)}")
-
 # ---------------- SEND MESSAGE ----------------
 @socketio.on("send_message")
 def send_message(data):
@@ -78,30 +72,33 @@ def send_message(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["username"]).first()
-        
+        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+       
         if not found_user:
             emit("error", {"message": "User not found"})
             return
-        
+       
         user_id = found_user.id
         role = found_user.role
         ticket_id = data["ticket_id"]
-
         found_ticket = SupportTicket.query.filter_by(id=ticket_id).first()
-        
+       
         if not found_ticket:
             emit("error", {"message": "Ticket not found"})
             return
-            
+           
         if found_ticket.status == "CLOSED":
             emit("error", {"message": "Cannot send message to closed ticket"})
             return
 
+        # Add access check for send_message (similar to join)
+        if found_user.role == "STUDENT" and str(found_ticket.student_id) != str(found_user.id):
+            emit("error", {"message": "Access denied"})
+            return
+           
         # TUZATISH: Ticket statusini yangilash
         if found_ticket.status == "OPEN" and role == "SUPPORT":
             found_ticket.status = "IN_PROGRESS"
-
         # Yangi xabar yaratish
         new_message = SupportMessage(
             ticket_id=ticket_id,
@@ -112,24 +109,21 @@ def send_message(data):
         )
         db.session.add(new_message)
         db.session.commit()
-
         # Xabarni formatlash
         message_data = new_message.to_dict()
-        
+       
         # TUZATISH: Room ga va o'ziga ham yuborish
         emit(
             "new_message",
             message_data,
             room=f"ticket_{ticket_id}",
-            include_self=True  # O'ziga ham yuborish
+            include_self=True # O'ziga ham yuborish
         )
-        
+       
         print(f"✅ New message sent to ticket_{ticket_id}")
-
     except Exception as e:
         print(f"❌ Error in send_message: {str(e)}")
         emit("error", {"message": "Failed to send message"})
-
 # ---------------- MARK AS READ ----------------
 @socketio.on("mark_as_read")
 def mark_as_read(data):
@@ -141,26 +135,22 @@ def mark_as_read(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["username"]).first()
-        
+        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+       
         if not found_user:
             return
-        
+       
         ticket_id = data["ticket_id"]
         role = found_user.role
-
         # O'zining yuborgan xabarlaridan tashqari barcha o'qilmagan xabarlarni o'qilgan qilish
         message_list = SupportMessage.query.filter(
             SupportMessage.ticket_id == ticket_id,
             SupportMessage.sender_role != role,
             SupportMessage.is_read == False
         ).all()
-
         for msg in message_list:
             msg.is_read = True
-
         db.session.commit()
-
         emit(
             "messages_read",
             {
@@ -169,10 +159,8 @@ def mark_as_read(data):
             },
             room=f"ticket_{ticket_id}"
         )
-
     except Exception as e:
         print(f"❌ Error in mark_as_read: {str(e)}")
-
 # ---------------- TYPING INDICATOR ----------------
 @socketio.on("typing")
 def typing(data):
@@ -184,13 +172,13 @@ def typing(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["username"]).first()
-        
+        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+       
         if not found_user:
             return
-        
+       
         ticket_id = data["ticket_id"]
-        
+       
         emit(
             "user_typing",
             {
@@ -200,12 +188,10 @@ def typing(data):
                 "username": found_user.username
             },
             room=f"ticket_{ticket_id}",
-            include_self=False  # O'ziga yubormaslik
+            include_self=False # O'ziga yubormaslik
         )
-
     except Exception as e:
         print(f"❌ Error in typing: {str(e)}")
-
 @socketio.on("stop_typing")
 def stop_typing(data):
     """
@@ -216,13 +202,13 @@ def stop_typing(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["username"]).first()
-        
+        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+       
         if not found_user:
             return
-        
+       
         ticket_id = data["ticket_id"]
-        
+       
         emit(
             "user_stop_typing",
             {
@@ -233,10 +219,8 @@ def stop_typing(data):
             room=f"ticket_{ticket_id}",
             include_self=False
         )
-
     except Exception as e:
         print(f"❌ Error in stop_typing: {str(e)}")
-
 # ---------------- TICKET STATUS CHANGE ----------------
 @socketio.on("close_ticket")
 def close_ticket_socket(data):
@@ -248,22 +232,22 @@ def close_ticket_socket(data):
     """
     try:
         decoded = decode_token(data["token"])
-        found_user = User.query.filter_by(username=decoded["username"]).first()
-        
+        found_user = User.query.filter_by(username=decoded["sub"]).first()  # Fixed: Use "sub" instead of "username"
+       
         if not found_user or found_user.role != "SUPPORT":
             emit("error", {"message": "Access denied"})
             return
-        
+       
         ticket_id = data["ticket_id"]
         found_ticket = SupportTicket.query.filter_by(id=ticket_id).first()
-        
+       
         if not found_ticket:
             emit("error", {"message": "Ticket not found"})
             return
-        
+       
         found_ticket.status = "CLOSED"
         db.session.commit()
-        
+       
         emit(
             "ticket_closed",
             {
@@ -272,7 +256,6 @@ def close_ticket_socket(data):
             },
             room=f"ticket_{ticket_id}"
         )
-
     except Exception as e:
         print(f"❌ Error in close_ticket: {str(e)}")
         emit("error", {"message": "Failed to close ticket"})
