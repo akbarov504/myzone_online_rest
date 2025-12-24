@@ -17,8 +17,10 @@ def disconnect():
 # ---------------- JOIN ROOM ----------------
 @socketio.on("join_ticket")
 def join_ticket(data):
+    print("🔥 JOIN_TICKET KELDI:", data)
     try:
         decoded = decode_token(data["token"])
+        print(decoded)
         found_user = User.query.filter_by(username=decoded["identity"]).first()
        
         if not found_user:
@@ -54,6 +56,7 @@ def join_ticket(data):
 @socketio.on("leave_ticket")
 def leave_ticket(data):
     try:
+        print("🔥 LEAVE_TICKET KELDI:", data)
         ticket_id = data["ticket_id"]
         room = f"ticket_{ticket_id}"
         leave_room(room)
@@ -72,8 +75,10 @@ def send_message(data):
         "message": "Salom"
     }
     """
+    print("🔥 SEND_MESSAGE KELDI:", data)
     try:
         decoded = decode_token(data["token"])
+        print(decoded)
         found_user = User.query.filter_by(username=decoded["identity"]).first()
        
         if not found_user:
@@ -136,8 +141,10 @@ def mark_as_read(data):
         "ticket_id": 1
     }
     """
+    print("🔥 MARK_AS_READ KELDI:", data)
     try:
         decoded = decode_token(data["token"])
+        print(decoded)
         found_user = User.query.filter_by(username=decoded["identity"]).first()
        
         if not found_user:
@@ -174,8 +181,10 @@ def typing(data):
         "ticket_id": 1
     }
     """
+    print("🔥 TYPING KELDI:", data)
     try:
         decoded = decode_token(data["token"])
+        print(decoded)
         found_user = User.query.filter_by(username=decoded["identity"]).first()
        
         if not found_user:
@@ -205,8 +214,10 @@ def stop_typing(data):
         "ticket_id": 1
     }
     """
+    print("🔥 STOP_TYPING KELDI:", data)
     try:
         decoded = decode_token(data["token"])
+        print(decoded)
         found_user = User.query.filter_by(username=decoded["identity"]).first()
        
         if not found_user:
@@ -236,8 +247,10 @@ def close_ticket_socket(data):
         "ticket_id": 1
     }
     """
+    print("🔥 CLOSE_TICKET_SOCKET KELDI:", data)
     try:
         decoded = decode_token(data["token"])
+        print(decoded)
         found_user = User.query.filter_by(username=decoded["identity"]).first()
        
         if not found_user or found_user.role != "SUPPORT":
