@@ -2,100 +2,118 @@ from models import db
 from app import socketio
 from flask import request
 from flask_socketio import join_room, emit
+import sys
 from models.support_ticket import SupportTicket
 from models.support_message import SupportMessage
 from support_auth import authenticate_socket, socket_users
 
-# ---------------- CONNECT ----------------
+# Print ni flush qilish uchun
+def log(message):
+    print(message, flush=True)  # flush=True muhim!
+    sys.stdout.flush()
+
+# yoki
+import logging
+logger = logging.getLogger(__name__)
+
 @socketio.on("connect")
 def connect():
-    try:
-        user = authenticate_socket()
-        if not user:
-            print("❌ SOCKET AUTH FAILED")
-            return False  # disconnect
-
-        socket_users[request.sid] = user
-        print(f"✅ SOCKET CONNECTED: {user.username} (ID: {user.id})")
-        return True
-    except Exception as e:
-        print(f"❌ CONNECT ERROR: {str(e)}")
+    log("=" * 50)
+    log("🔌 NEW CONNECTION ATTEMPT")
+    log(f"📍 Request SID: {request.sid}")
+    
+    user = authenticate_socket()
+    if not user:
+        log("❌ AUTHENTICATION FAILED")
         return False
 
-# ---------------- DISCONNECT ----------------
-@socketio.on("disconnect")
-def disconnect_handler():
-    user = socket_users.pop(request.sid, None)
-    if user:
-        print(f"❌ SOCKET DISCONNECTED: {user.username}")
-    else:
-        print("❌ SOCKET DISCONNECTED: Unknown user")
+    socket_users[request.sid] = user
+    log(f"✅ USER CONNECTED: {user.username} (ID: {user.id})")
+    log(f"📊 Total connected users: {len(socket_users)}")
+    log("=" * 50)
+    return True
 
-# ---------------- JOIN TICKET ----------------
 @socketio.on("join_ticket")
 def join_ticket(data):
-    try:
-        user = socket_users.get(request.sid)
-        if not user:
-            emit("error", {"message": "User not authenticated"})
-            return
+    log("\n" + "=" * 50)
+    log("🎫 JOIN_TICKET EVENT RECEIVED")
+    log(f"📦 Data: {data}")
+    
+    user = socket_users.get(request.sid)
+    if not user:
+        log("❌ User not found in socket_users")
+        emit("error", {"message": "User not authenticated"})
+        return
 
-        ticket_id = data.get("ticket_id")
-        if not ticket_id:
-            emit("error", {"message": "ticket_id is required"})
-            return
+    log(f"👤 User: {user.username} ({user.role})")
+    
+    ticket_id = data.get("ticket_id")
+    log(f"🎫 Ticket ID: {ticket_id}")
+    
+    ticket = SupportTicket.query.get(ticket_id)
+    if not ticket:
+        log(f"❌ Ticket {ticket_id} NOT FOUND")
+        emit("error", {"message": "Ticket not found"})
+        return
 
-        ticket = SupportTicket.query.get(ticket_id)
-        if not ticket:
-            emit("error", {"message": "Ticket not found"})
-            return
+    log(f"✅ Ticket found: {ticket.id}")
+    
+    # Check access
+    if user.role == "STUDENT" and str(ticket.student_id) != str(user.id):
+        log(f"❌ ACCESS DENIED: User {user.id} != Ticket student {ticket.student_id}")
+        emit("error", {"message": "Access denied"})
+        return
 
-        # Check access
-        if user.role == "STUDENT" and str(ticket.student_id) != str(user.id):
-            emit("error", {"message": "Access denied"})
-            return
+    room = f"ticket_{ticket_id}"
+    join_room(room)
+    
+    log(f"✅ User {user.username} JOINED ROOM: {room}")
+    log("=" * 50 + "\n")
 
-        room = f"ticket_{ticket_id}"
-        join_room(room)
+    emit("joined_ticket", {
+        "ticket_id": ticket_id,
+        "role": user.role,
+        "username": user.username
+    })
 
-        print(f"✅ USER {user.username} JOINED ROOM: {room}")
-
-        emit("joined_ticket", {
-            "ticket_id": ticket_id,
-            "role": user.role,
-            "username": user.username
-        })
-
-    except Exception as e:
-        print(f"❌ JOIN_TICKET ERROR: {str(e)}")
-        emit("error", {"message": "Failed to join ticket"})
-
-# ---------------- SEND MESSAGE ----------------
 @socketio.on("send_message")
 def send_message(data):
+    log("\n" + "=" * 50)
+    log("📨 SEND_MESSAGE EVENT RECEIVED")
+    log(f"📦 Data: {data}")
+    
     try:
         user = socket_users.get(request.sid)
         if not user:
+            log("❌ User not authenticated")
             emit("error", {"message": "User not authenticated"})
             return
+
+        log(f"👤 Sender: {user.username} ({user.role})")
 
         ticket_id = data.get("ticket_id")
         text = data.get("message")
+        
+        log(f"🎫 Ticket: {ticket_id}")
+        log(f"💬 Message: {text[:50]}..." if len(text) > 50 else f"💬 Message: {text}")
 
         if not ticket_id or not text:
+            log("❌ Missing ticket_id or message")
             emit("error", {"message": "ticket_id and message are required"})
             return
 
         ticket = SupportTicket.query.get(ticket_id)
         if not ticket:
+            log(f"❌ Ticket {ticket_id} not found")
             emit("error", {"message": "Ticket not found"})
             return
 
         if ticket.status == "CLOSED":
+            log(f"❌ Ticket {ticket_id} is CLOSED")
             emit("error", {"message": "Ticket is closed"})
             return
 
-        # Create message
+        log("💾 Creating message in database...")
         msg = SupportMessage(
             ticket_id=ticket_id,
             sender_id=user.id,
@@ -105,11 +123,10 @@ def send_message(data):
 
         db.session.add(msg)
         db.session.commit()
-        db.session.refresh(msg)  # Refresh to get created_at, etc.
+        db.session.refresh(msg)
 
-        print(f"✅ MESSAGE SAVED: ID={msg.id}, Ticket={ticket_id}")
+        log(f"✅ Message saved: ID={msg.id}")
 
-        # Prepare message data
         message_data = {
             "id": msg.id,
             "ticket_id": msg.ticket_id,
@@ -120,15 +137,24 @@ def send_message(data):
             "sender_name": user.username
         }
 
-        # Emit to room
         room = f"ticket_{ticket_id}"
+        log(f"📡 Emitting to room: {room}")
         emit("new_message", message_data, room=room, include_self=True)
         
-        print(f"✅ MESSAGE EMITTED TO ROOM: {room}")
+        log(f"✅ Message emitted successfully")
+        log("=" * 50 + "\n")
 
     except Exception as e:
         db.session.rollback()
-        print(f"❌ SEND_MESSAGE ERROR: {str(e)}")
+        log(f"❌ ERROR: {str(e)}")
         import traceback
-        traceback.print_exc()
+        log(traceback.format_exc())
         emit("error", {"message": "Failed to send message"})
+
+@socketio.on("disconnect")
+def disconnect_handler():
+    user = socket_users.pop(request.sid, None)
+    if user:
+        log(f"👋 User disconnected: {user.username}")
+    else:
+        log(f"👋 Unknown user disconnected: {request.sid}")

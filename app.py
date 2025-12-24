@@ -1,3 +1,4 @@
+import logging
 from flask import Flask
 from flask_cors import CORS
 from flasgger import Swagger
@@ -31,6 +32,13 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 3600
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://akbarov:akbarov@127.0.0.1:5432/my_zone_online_db"
 app.config["RATELIMIT_HEADERS_ENABLED"] = True
 app.config["RATELIMIT_STRATEGY"] = "moving-window"
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+app.logger.setLevel(logging.DEBUG)
 
 Swagger(app, template={
     "info": {
@@ -69,4 +77,4 @@ with app.app_context():
     super_admin_create()
 
 if __name__ == "__main__":
-    socketio.run(app, port=8080)
+    socketio.run(app, port=8080, debug=True, use_reloader=True, log_output=True)
