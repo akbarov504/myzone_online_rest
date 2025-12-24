@@ -21,7 +21,7 @@ def join_ticket(data):
     try:
         decoded = decode_token(data["token"])
         print(decoded)
-        found_user = User.query.filter_by(username=decoded["identity"]).first()
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
        
         if not found_user:
             emit("error", {"message": "User not found"})
@@ -79,7 +79,7 @@ def send_message(data):
     try:
         decoded = decode_token(data["token"])
         print(decoded)
-        found_user = User.query.filter_by(username=decoded["identity"]).first()
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
        
         if not found_user:
             emit("error", {"message": "User not found"})
@@ -145,7 +145,7 @@ def mark_as_read(data):
     try:
         decoded = decode_token(data["token"])
         print(decoded)
-        found_user = User.query.filter_by(username=decoded["identity"]).first()
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
        
         if not found_user:
             return
@@ -185,7 +185,7 @@ def typing(data):
     try:
         decoded = decode_token(data["token"])
         print(decoded)
-        found_user = User.query.filter_by(username=decoded["identity"]).first()
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
        
         if not found_user:
             return
@@ -218,7 +218,7 @@ def stop_typing(data):
     try:
         decoded = decode_token(data["token"])
         print(decoded)
-        found_user = User.query.filter_by(username=decoded["identity"]).first()
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
        
         if not found_user:
             return
@@ -251,7 +251,7 @@ def close_ticket_socket(data):
     try:
         decoded = decode_token(data["token"])
         print(decoded)
-        found_user = User.query.filter_by(username=decoded["identity"]).first()
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
        
         if not found_user or found_user.role != "SUPPORT":
             emit("error", {"message": "Access denied"})
