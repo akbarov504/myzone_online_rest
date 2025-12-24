@@ -1,160 +1,279 @@
 from models import db
 from app import socketio
-from flask import request
-from flask_socketio import join_room, emit
-import sys
+from models.user import User
+from flask_jwt_extended import decode_token
 from models.support_ticket import SupportTicket
 from models.support_message import SupportMessage
-from support_auth import authenticate_socket, socket_users
+from flask_socketio import emit, join_room, leave_room
 
-# Print ni flush qilish uchun
-def log(message):
-    print(message, flush=True)  # flush=True muhim!
-    sys.stdout.flush()
-
-# yoki
-import logging
-logger = logging.getLogger(__name__)
-
-@socketio.on("connect")
+@socketio.on('connect')
 def connect():
-    log("=" * 50)
-    log("🔌 NEW CONNECTION ATTEMPT")
-    log(f"📍 Request SID: {request.sid}")
-    
-    user = authenticate_socket()
-    if not user:
-        log("❌ AUTHENTICATION FAILED")
-        return False
+    print("✅ SOCKET CONNECTED")
 
-    socket_users[request.sid] = user
-    log(f"✅ USER CONNECTED: {user.username} (ID: {user.id})")
-    log(f"📊 Total connected users: {len(socket_users)}")
-    log("=" * 50)
-    return True
+@socketio.on('disconnect')
+def disconnect():
+    print("❌ SOCKET DISCONNECTED")
 
+# ---------------- JOIN ROOM ----------------
 @socketio.on("join_ticket")
 def join_ticket(data):
-    log("\n" + "=" * 50)
-    log("🎫 JOIN_TICKET EVENT RECEIVED")
-    log(f"📦 Data: {data}")
-    
-    user = socket_users.get(request.sid)
-    if not user:
-        log("❌ User not found in socket_users")
-        emit("error", {"message": "User not authenticated"})
-        return
-
-    log(f"👤 User: {user.username} ({user.role})")
-    
-    ticket_id = data.get("ticket_id")
-    log(f"🎫 Ticket ID: {ticket_id}")
-    
-    ticket = SupportTicket.query.get(ticket_id)
-    if not ticket:
-        log(f"❌ Ticket {ticket_id} NOT FOUND")
-        emit("error", {"message": "Ticket not found"})
-        return
-
-    log(f"✅ Ticket found: {ticket.id}")
-    
-    # Check access
-    if user.role == "STUDENT" and str(ticket.student_id) != str(user.id):
-        log(f"❌ ACCESS DENIED: User {user.id} != Ticket student {ticket.student_id}")
-        emit("error", {"message": "Access denied"})
-        return
-
-    room = f"ticket_{ticket_id}"
-    join_room(room)
-    
-    log(f"✅ User {user.username} JOINED ROOM: {room}")
-    log("=" * 50 + "\n")
-
-    emit("joined_ticket", {
-        "ticket_id": ticket_id,
-        "role": user.role,
-        "username": user.username
-    })
-
-@socketio.on("send_message")
-def send_message(data):
-    log("\n" + "=" * 50)
-    log("📨 SEND_MESSAGE EVENT RECEIVED")
-    log(f"📦 Data: {data}")
-    
+    print("🔥 JOIN_TICKET KELDI:", data)
     try:
-        user = socket_users.get(request.sid)
-        if not user:
-            log("❌ User not authenticated")
-            emit("error", {"message": "User not authenticated"})
+        decoded = decode_token(data["token"])
+        print(decoded)
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
+       
+        if not found_user:
+            emit("error", {"message": "User not found"})
             return
-
-        log(f"👤 Sender: {user.username} ({user.role})")
-
-        ticket_id = data.get("ticket_id")
-        text = data.get("message")
-        
-        log(f"🎫 Ticket: {ticket_id}")
-        log(f"💬 Message: {text[:50]}..." if len(text) > 50 else f"💬 Message: {text}")
-
-        if not ticket_id or not text:
-            log("❌ Missing ticket_id or message")
-            emit("error", {"message": "ticket_id and message are required"})
-            return
-
-        ticket = SupportTicket.query.get(ticket_id)
-        if not ticket:
-            log(f"❌ Ticket {ticket_id} not found")
+        ticket_id = data["ticket_id"]
+        found_ticket = SupportTicket.query.filter_by(id=ticket_id).first()
+       
+        if not found_ticket:
             emit("error", {"message": "Ticket not found"})
             return
-
-        if ticket.status == "CLOSED":
-            log(f"❌ Ticket {ticket_id} is CLOSED")
-            emit("error", {"message": "Ticket is closed"})
+        # STUDENT faqat o'z ticketlariga kirishi mumkin
+        # TUZATISH: student_id string bo'lishi mumkin, shuning uchun str() ga o'tkazamiz
+        if found_user.role == "STUDENT" and str(found_ticket.student_id) != str(found_user.id):
+            emit("error", {"message": "Access denied"})
             return
-
-        log("💾 Creating message in database...")
-        msg = SupportMessage(
-            ticket_id=ticket_id,
-            sender_id=user.id,
-            sender_role=user.role,
-            message=text
-        )
-
-        db.session.add(msg)
-        db.session.commit()
-        db.session.refresh(msg)
-
-        log(f"✅ Message saved: ID={msg.id}")
-
-        message_data = {
-            "id": msg.id,
-            "ticket_id": msg.ticket_id,
-            "sender_id": msg.sender_id,
-            "sender_role": msg.sender_role,
-            "message": msg.message,
-            "created_at": msg.created_at.isoformat() if hasattr(msg, 'created_at') else None,
-            "sender_name": user.username
-        }
-
         room = f"ticket_{ticket_id}"
-        log(f"📡 Emitting to room: {room}")
-        emit("new_message", message_data, room=room, include_self=True)
-        
-        log(f"✅ Message emitted successfully")
-        log("=" * 50 + "\n")
-
+        join_room(room)
+       
+        emit("joined_ticket", {
+            "ticket_id": ticket_id,
+            "room": room,
+            "user_id": str(found_user.id),
+            "role": found_user.role
+        })
+       
+        print(f"✅ User {found_user.username} joined {room}")
     except Exception as e:
-        db.session.rollback()
-        log(f"❌ ERROR: {str(e)}")
-        import traceback
-        log(traceback.format_exc())
+        print(f"❌ Error in join_ticket: {str(e)}")
+        emit("error", {"message": "Failed to join ticket"})
+
+# ---------------- LEAVE ROOM ----------------
+@socketio.on("leave_ticket")
+def leave_ticket(data):
+    try:
+        print("🔥 LEAVE_TICKET KELDI:", data)
+        ticket_id = data["ticket_id"]
+        room = f"ticket_{ticket_id}"
+        leave_room(room)
+        emit("left_ticket", {"ticket_id": ticket_id})
+        print(f"✅ User left {room}")
+    except Exception as e:
+        print(f"❌ Error in leave_ticket: {str(e)}")
+
+# ---------------- SEND MESSAGE ----------------
+@socketio.on("send_message")
+def send_message(data):
+    """
+    data = {
+        "token": JWT,
+        "ticket_id": 1,
+        "message": "Salom"
+    }
+    """
+    print("🔥 SEND_MESSAGE KELDI:", data)
+    try:
+        decoded = decode_token(data["token"])
+        print(decoded)
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
+       
+        if not found_user:
+            emit("error", {"message": "User not found"})
+            return
+       
+        user_id = found_user.id
+        role = found_user.role
+        ticket_id = data["ticket_id"]
+        found_ticket = SupportTicket.query.filter_by(id=ticket_id).first()
+       
+        if not found_ticket:
+            emit("error", {"message": "Ticket not found"})
+            return
+           
+        if found_ticket.status == "CLOSED":
+            emit("error", {"message": "Cannot send message to closed ticket"})
+            return
+        # Add access check for send_message (similar to join)
+        if found_user.role == "STUDENT" and str(found_ticket.student_id) != str(found_user.id):
+            emit("error", {"message": "Access denied"})
+            return
+           
+        # TUZATISH: Ticket statusini yangilash
+        if found_ticket.status == "OPEN" and role == "SUPPORT":
+            found_ticket.status = "IN_PROGRESS"
+        # Yangi xabar yaratish
+        new_message = SupportMessage(
+            ticket_id=ticket_id,
+            sender_id=user_id,
+            sender_role=role,
+            message=data["message"],
+            is_read=False
+        )
+        db.session.add(new_message)
+        db.session.commit()
+        db.session.refresh(new_message)
+        # Xabarni formatlash
+        message_data = new_message.to_dict()
+       
+        # TUZATISH: Room ga va o'ziga ham yuborish
+        emit(
+            "new_message",
+            message_data,
+            room=f"ticket_{ticket_id}",
+            include_self=True # O'ziga ham yuborish
+        )
+       
+        print(f"✅ New message sent to ticket_{ticket_id}")
+    except Exception as e:
+        print(f"❌ Error in send_message: {str(e)}")
         emit("error", {"message": "Failed to send message"})
 
-@socketio.on("disconnect")
-def disconnect_handler():
-    user = socket_users.pop(request.sid, None)
-    if user:
-        log(f"👋 User disconnected: {user.username}")
-    else:
-        log(f"👋 Unknown user disconnected: {request.sid}")
+# ---------------- MARK AS READ ----------------
+@socketio.on("mark_as_read")
+def mark_as_read(data):
+    """
+    data = {
+        "token": JWT,
+        "ticket_id": 1
+    }
+    """
+    print("🔥 MARK_AS_READ KELDI:", data)
+    try:
+        decoded = decode_token(data["token"])
+        print(decoded)
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
+       
+        if not found_user:
+            return
+       
+        ticket_id = data["ticket_id"]
+        role = found_user.role
+        # O'zining yuborgan xabarlaridan tashqari barcha o'qilmagan xabarlarni o'qilgan qilish
+        message_list = SupportMessage.query.filter(
+            SupportMessage.ticket_id == ticket_id,
+            SupportMessage.sender_role != role,
+            SupportMessage.is_read == False
+        ).all()
+        for msg in message_list:
+            msg.is_read = True
+        db.session.commit()
+        emit(
+            "messages_read",
+            {
+                "ticket_id": ticket_id,
+                "by_role": role
+            },
+            room=f"ticket_{ticket_id}"
+        )
+    except Exception as e:
+        print(f"❌ Error in mark_as_read: {str(e)}")
+
+# ---------------- TYPING INDICATOR ----------------
+@socketio.on("typing")
+def typing(data):
+    """
+    data = {
+        "token": JWT,
+        "ticket_id": 1
+    }
+    """
+    print("🔥 TYPING KELDI:", data)
+    try:
+        decoded = decode_token(data["token"])
+        print(decoded)
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
+       
+        if not found_user:
+            return
+       
+        ticket_id = data["ticket_id"]
+       
+        emit(
+            "user_typing",
+            {
+                "ticket_id": ticket_id,
+                "user_id": str(found_user.id),
+                "role": found_user.role,
+                "username": found_user.username
+            },
+            room=f"ticket_{ticket_id}",
+            include_self=False # O'ziga yubormaslik
+        )
+    except Exception as e:
+        print(f"❌ Error in typing: {str(e)}")
+
+@socketio.on("stop_typing")
+def stop_typing(data):
+    """
+    data = {
+        "token": JWT,
+        "ticket_id": 1
+    }
+    """
+    print("🔥 STOP_TYPING KELDI:", data)
+    try:
+        decoded = decode_token(data["token"])
+        print(decoded)
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
+       
+        if not found_user:
+            return
+       
+        ticket_id = data["ticket_id"]
+       
+        emit(
+            "user_stop_typing",
+            {
+                "ticket_id": ticket_id,
+                "user_id": str(found_user.id),
+                "role": found_user.role
+            },
+            room=f"ticket_{ticket_id}",
+            include_self=False
+        )
+    except Exception as e:
+        print(f"❌ Error in stop_typing: {str(e)}")
+# ---------------- TICKET STATUS CHANGE ----------------
+@socketio.on("close_ticket")
+def close_ticket_socket(data):
+    """
+    data = {
+        "token": JWT,
+        "ticket_id": 1
+    }
+    """
+    print("🔥 CLOSE_TICKET_SOCKET KELDI:", data)
+    try:
+        decoded = decode_token(data["token"])
+        print(decoded)
+        found_user = User.query.filter_by(username=decoded["sub"]).first()
+       
+        if not found_user or found_user.role != "SUPPORT":
+            emit("error", {"message": "Access denied"})
+            return
+       
+        ticket_id = data["ticket_id"]
+        found_ticket = SupportTicket.query.filter_by(id=ticket_id).first()
+       
+        if not found_ticket:
+            emit("error", {"message": "Ticket not found"})
+            return
+       
+        found_ticket.status = "CLOSED"
+        db.session.commit()
+       
+        emit(
+            "ticket_closed",
+            {
+                "ticket_id": ticket_id,
+                "status": "CLOSED"
+            },
+            room=f"ticket_{ticket_id}"
+        )
+    except Exception as e:
+        print(f"❌ Error in close_ticket: {str(e)}")
+        emit("error", {"message": "Failed to close ticket"})
