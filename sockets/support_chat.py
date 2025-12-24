@@ -1,7 +1,6 @@
 from flask import request
+from app import socketio, app, db
 from flask_socketio import join_room, emit
-from app import socketio
-from models import db
 from models.support_ticket import SupportTicket
 from models.support_message import SupportMessage
 from support_auth import authenticate_socket, socket_users
@@ -63,15 +62,16 @@ def send_message(data):
         emit("error", {"message": "Ticket closed"})
         return
 
-    msg = SupportMessage(
-        ticket_id=ticket_id,
-        sender_id=user.id,
-        sender_role=user.role,
-        message=text
-    )
+    with app.app_context():
+        msg = SupportMessage(
+            ticket_id=ticket_id,
+            sender_id=user.id,
+            sender_role=user.role,
+            message=text
+        )
 
-    db.session.add(msg)
-    db.session.commit()
+        db.session.add(msg)
+        db.session.commit()
 
     emit(
         "new_message",
