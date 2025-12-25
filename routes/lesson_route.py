@@ -255,7 +255,7 @@ class LessonListCreateResource(Resource):
         today_lesson_student = LessonStudent.query.filter_by(student_id=found_user.id, date=today_date).first()
 
         for lesson in lesson_list:
-            lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, lesson_id=lesson.id).first()
+            lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, lesson_id=lesson.id).order_by(LessonTestProgress.created_at.desc()).first()
             
             if lesson_test_progress:
                 if today_lesson_student and lesson_test_progress.is_completed == False and lesson.order > 1:
