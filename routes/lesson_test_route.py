@@ -446,12 +446,14 @@ class LessonTestFinishActionResource(Resource):
             next_lesson = Lesson.query.filter(Lesson.order == found_lesson.order + 1).first()
 
             if next_lesson:
-                new_progress = LessonTestProgress(found_student.id, next_lesson.id, False, 0)
-                db.session.add(new_progress)
-                
-                today_date = date.today()
-                new_lesson_student = LessonStudent(found_student.id, today_date)
-                db.session.add(new_lesson_student)
+                found_progress = LessonTestProgress.query.filter_by(student_id=found_student.id, lesson_id=next_lesson.id, is_completed=False).first()
+                if not found_progress:
+                    new_progress = LessonTestProgress(found_student.id, next_lesson.id, False, 0)
+                    db.session.add(new_progress)
+                    
+                    today_date = date.today()
+                    new_lesson_student = LessonStudent(found_student.id, today_date)
+                    db.session.add(new_lesson_student)
         
         db.session.add(progress)
         db.session.commit()
