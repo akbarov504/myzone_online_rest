@@ -11,6 +11,7 @@ from flask_restful import Api, Resource, reqparse
 support_ticket_create_parse = reqparse.RequestParser()
 support_ticket_create_parse.add_argument("student_id", type=int, required=True, help="Student ID cannot be blank")
 support_ticket_create_parse.add_argument("message", type=str, required=True, help="Message cannot be blank")
+support_ticket_create_parse.add_argument("file_path", type=str)
 
 support_ticket_bp = Blueprint("support_ticket", __name__, url_prefix="/api/support/ticket")
 api = Api(support_ticket_bp)
@@ -81,6 +82,8 @@ class SupportTicketResource(Resource):
                         type: integer
                     message:
                         type: string
+                    file_path:
+                        type: string
                 required: [student_id, message]
         responses:
             200:
@@ -93,6 +96,7 @@ class SupportTicketResource(Resource):
         data = support_ticket_create_parse.parse_args()
         student_id = data['student_id']
         message = data['message']
+        file_path = data['file_path']
 
         found_student = User.query.filter_by(id=student_id, role="STUDENT").first()
         if not found_student:
@@ -102,7 +106,7 @@ class SupportTicketResource(Resource):
         if not found_ticket or found_ticket.status == "CLOSED":
             return get_response("Ticket not found", None, 404), 404
 
-        new_support_message = SupportMessage(found_ticket.id, found_student.id, found_student.role, message)
+        new_support_message = SupportMessage(found_ticket.id, found_student.id, found_student.role, message, file_path)
         db.session.add(new_support_message)
         db.session.commit()
 
@@ -179,6 +183,8 @@ class SupportTicketListCreateResource(Resource):
                         type: integer
                     message:
                         type: string
+                    file_path:
+                        type: string
                 required: [student_id, message]
         responses:
             200:
@@ -191,6 +197,7 @@ class SupportTicketListCreateResource(Resource):
         data = support_ticket_create_parse.parse_args()
         student_id = data['student_id']
         message = data['message']
+        file_path = data['file_path']
 
         found_student = User.query.filter_by(id=student_id, role="STUDENT").first()
         if not found_student:
@@ -200,9 +207,10 @@ class SupportTicketListCreateResource(Resource):
         db.session.add(new_support_ticket)
         db.session.commit()
 
-        new_support_message = SupportMessage(new_support_ticket.id, found_student.id, found_student.role, message)
+        new_support_message = SupportMessage(new_support_ticket.id, found_student.id, found_student.role, message, file_path)
         db.session.add(new_support_message)
         db.session.commit()
+
         return get_response("Successfully created new support ticket", new_support_ticket.id, 200), 200
 
 class SupportTicketShowActionResource(Resource):
@@ -287,6 +295,8 @@ class SupportTicketReplyActionResource(Resource):
                         type: integer
                     message:
                         type: string
+                    file_path:
+                        type: string
                 required: [student_id, message]
         responses:
             200:
@@ -301,6 +311,7 @@ class SupportTicketReplyActionResource(Resource):
         data = support_ticket_create_parse.parse_args()
         student_id = data['student_id']
         message = data['message']
+        file_path = data['file_path']
 
         found_user = User.query.filter_by(username=username, role="SUPPORT").first()
         if not found_user:
@@ -310,7 +321,7 @@ class SupportTicketReplyActionResource(Resource):
         if not found_ticket or found_ticket.status == "CLOSED":
             return get_response("Ticket not found", None, 404), 404
 
-        new_support_message = SupportMessage(found_ticket.id, found_user.id, found_user.role, message)
+        new_support_message = SupportMessage(found_ticket.id, found_user.id, found_user.role, message, file_path)
         db.session.add(new_support_message)
         db.session.commit()
 

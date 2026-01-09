@@ -13,16 +13,18 @@ class SupportMessage(db.Model):
     sender_id = db.Column(db.Integer(), db.ForeignKey("user.id"), nullable=False)
     sender_role = db.Column(db.String(50), nullable=False)
     message = db.Column(db.Text(), nullable=False)
+    file_path = db.Column(db.Text(), nullable=True)
     is_read = db.Column(db.Boolean, default=False)
     
     created_at = db.Column(db.DateTime(), default=lambda: datetime.now(time_zone))
 
-    def __init__(self, ticket_id, sender_id, sender_role, message):
+    def __init__(self, ticket_id, sender_id, sender_role, message, file_path=None):
         super().__init__()
         self.ticket_id = ticket_id
         self.sender_id = sender_id
         self.sender_role = sender_role
         self.message = message
+        self.file_path = file_path
     
     @staticmethod
     def to_dict(support_message):
@@ -32,6 +34,7 @@ class SupportMessage(db.Model):
             "sender_id": support_message.sender_id,
             "sender_role": support_message.sender_role,
             "message": support_message.message,
+            "file_path": support_message.file_path,
             "is_read": support_message.is_read,
             "created_at": str(support_message.created_at)
         }
