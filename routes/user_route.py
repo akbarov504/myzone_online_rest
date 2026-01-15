@@ -133,7 +133,7 @@ class UserResource(Resource):
         db.session.commit()
         return get_response("Successfully deleted user", None, 200), 200
     
-    @role_required(["ADMIN"])
+    @role_required(["ADMIN", "TEACHER", "STUDENT", "SUPPORT"])
     def patch(self, user_id):
         """User Update API
         Path - /api/user/<user_id>
