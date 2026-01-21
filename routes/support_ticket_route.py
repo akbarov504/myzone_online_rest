@@ -13,6 +13,9 @@ support_ticket_create_parse.add_argument("student_id", type=int, required=True, 
 support_ticket_create_parse.add_argument("message", type=str, required=True, help="Message cannot be blank")
 support_ticket_create_parse.add_argument("file_path", type=str)
 
+support_ticket_message_update_parse = reqparse.RequestParser()
+support_ticket_message_update_parse.add_argument("message", type=str)
+
 support_ticket_bp = Blueprint("support_ticket", __name__, url_prefix="/api/support/ticket")
 api = Api(support_ticket_bp)
 
@@ -363,8 +366,90 @@ class SupportTicketCloseActionResource(Resource):
 
         return get_response("Successfully support ticket closed", None, 200), 200
 
+class SupportTicketMessageActionResource(Resource):
+    decorators = [role_required(["SUPPORT", "STUDENT"])]
+
+    def patch(self, message_id):
+        """Support Ticket Message Update API
+        Path - /api/support/ticket/message/<message_id>
+        Method - PATCH
+        ---
+        consumes: application/json
+        parameters:
+            - in: header
+              name: Authorization
+              type: string
+              required: true
+              description: Bearer token for authentication
+            
+            - name: message_id
+              in: path
+              type: integer
+              required: true
+              description: Enter Message ID
+
+            - name: body
+              in: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    message:
+                        type: string
+        responses:
+            200:
+                description: Support Ticket Message Update
+            404:
+                description: Message not found
+        """
+        found_message = SupportMessage.query.filter_by(id=message_id).first()
+        if not found_message:
+            return get_response("Message not found", None, 404), 404
+
+        data = support_ticket_message_update_parse.parse_args()
+        message = data.get('message', None)
+
+        if message is not None:
+            found_message.message = message
+
+        db.session.commit()
+        return get_response("Successfully support ticket message update", None, 200), 200
+    
+    def delete(self, message_id):
+        """Support Ticket Message Delete API
+        Path - /api/support/ticket/message/<message_id>
+        Method - DELETE
+        ---
+        consumes: application/json
+        parameters:
+            - in: header
+              name: Authorization
+              type: string
+              required: true
+              description: Bearer token for authentication
+            
+            - name: message_id
+              in: path
+              type: integer
+              required: true
+              description: Enter Message ID
+        responses:
+            200:
+                description: Support Ticket Message Delete
+            404:
+                description: Message not found
+        """
+        found_message = SupportMessage.query.filter_by(id=message_id).first()
+        if not found_message:
+            return get_response("Message not found", None, 404), 404
+
+        db.session.delete(found_message)
+        db.session.commit()
+        return get_response("Successfully support ticket message deleted", None, 200), 200
+
 api.add_resource(SupportTicketResource, "/<ticket_id>/messages")
 api.add_resource(SupportTicketListCreateResource, "/")
 api.add_resource(SupportTicketShowActionResource, "/inbox")
 api.add_resource(SupportTicketReplyActionResource, "/<ticket_id>/reply")
 api.add_resource(SupportTicketCloseActionResource, "/<ticket_id>/close")
+api.add_resource(SupportTicketMessageActionResource, "/message/<message_id>")
