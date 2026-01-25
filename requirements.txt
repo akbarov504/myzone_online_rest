@@ -11,6 +11,8 @@ psycopg2-binary
 google-api-python-client 
 google-auth 
 google-auth-oauthlib
-flask-socketio
-gevent
-gevent-websocket
+Flask-SocketIO==5.3.6
+python-socketio==5.11.0
+python-engineio==4.9.0
+gevent==23.9.1
+gevent-websocket==0.10.1

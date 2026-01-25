@@ -156,6 +156,11 @@ class SupportTicketListCreateResource(Resource):
             result_unread_count += unread_count
 
             dict_support_ticket = SupportTicket.to_dict(support_ticket)
+
+            found_message = SupportMessage.query.filter_by(ticket_id=support_ticket.id).order_by(SupportMessage.created_at.desc()).first()
+            if found_message:
+                dict_support_ticket.update({"last_message": SupportMessage.to_dict(found_message)})
+                
             result_support_ticket_list.append(dict_support_ticket)
         
         result_dict.update({"unread_count": result_unread_count})
@@ -254,10 +259,18 @@ class SupportTicketShowActionResource(Resource):
                 dict_support_ticket = SupportTicket.to_dict(support_ticket)
                 dict_found_student = User.to_dict(found_student)
 
+                found_message = SupportMessage.query.filter_by(ticket_id=support_ticket.id).order_by(SupportMessage.created_at.desc()).first()
+                if found_message:
+                    dict_support_ticket.update({"last_message": SupportMessage.to_dict(found_message)})
+
                 dict_support_ticket.update({"student": dict_found_student})
                 result_support_ticket_list.append(dict_support_ticket)
             else:
                 dict_support_ticket = SupportTicket.to_dict(support_ticket)
+
+                found_message = SupportMessage.query.filter_by(ticket_id=support_ticket.id).order_by(SupportMessage.created_at.desc()).first()
+                if found_message:
+                    dict_support_ticket.update({"last_message": SupportMessage.to_dict(found_message)})
 
                 dict_support_ticket.update({"student": None})
                 result_support_ticket_list.append(dict_support_ticket)

@@ -30,7 +30,7 @@ api = Api(notification_bp)
 
 class NotificationResource(Resource):
 
-    @role_required(["ADMIN", "STUDENT"])
+    @role_required(["ADMIN", "STUDENT", "TEACHER", "SUPPORT"])
     def get(self, notification_id):
         """Notification Get API
         Path - /api/notification/<notification_id>
@@ -226,7 +226,7 @@ class NotificationListCreateResource(Resource):
         return get_response("Successfully created notification", new_notification.id, 200), 200
 
 class NotificationListReadResource(Resource):
-    decorators = [role_required(["ADMIN", "STUDENT"])]
+    decorators = [role_required(["ADMIN", "STUDENT", "TEACHER", "SUPPORT"])]
 
     def get(self, user_id):
         """User Notification List API
