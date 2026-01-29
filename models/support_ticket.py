@@ -13,6 +13,7 @@ class SupportTicket(db.Model):
     status = db.Column(db.String(50), nullable=False)
     
     created_at = db.Column(db.DateTime(), default=lambda: datetime.now(time_zone))
+    updated_at = db.Column(db.DateTime())
 
     def __init__(self, student_id, status):
         super().__init__()
@@ -25,6 +26,7 @@ class SupportTicket(db.Model):
             "id": support_ticket.id,
             "student_id": support_ticket.student_id,
             "status": support_ticket.status,
-            "created_at": str(support_ticket.created_at)
+            "created_at": str(support_ticket.created_at),
+            "updated_at": str(support_ticket.updated_at)
         }
         return _
