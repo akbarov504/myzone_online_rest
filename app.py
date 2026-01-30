@@ -197,6 +197,7 @@ from routes.type_route import type_bp
 from routes.course_route import course_bp
 from routes.lesson_route import lesson_bp
 from routes.language_route import language_bp
+from routes.module_test_route import module_test_bp
 from routes.lesson_test_route import lesson_test_bp
 from routes.course_save_route import course_save_bp
 from routes.notification_route import notification_bp
@@ -303,6 +304,7 @@ app.register_blueprint(type_bp)
 app.register_blueprint(course_bp)
 app.register_blueprint(lesson_bp)
 app.register_blueprint(language_bp)
+app.register_blueprint(module_test_bp)
 app.register_blueprint(lesson_test_bp)
 app.register_blueprint(course_save_bp)
 app.register_blueprint(notification_bp)
