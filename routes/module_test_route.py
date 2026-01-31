@@ -178,8 +178,8 @@ class ModuleTestResource(Resource):
         return get_response("Successfully updated module test", None, 200), 200
 
 class ModuleTestListCreateResource(Resource):
-    decorators = [role_required(["ADMIN"])]
 
+    @role_required(["ADMIN", "STUDENT"])
     def get(self, module_id):
         """Module Test List API
         Path - /api/module_test/module/<module_id>
@@ -213,6 +213,7 @@ class ModuleTestListCreateResource(Resource):
         result_module_test_list = [ModuleTest.to_dict(module_test) for module_test in module_test_list]
         return get_response("Module Test List", result_module_test_list, 200), 200
 
+    @role_required(["ADMIN"])
     def post(self, module_id):
         """Module Test Create API
         Path - /api/module_test/module/<module_id>
