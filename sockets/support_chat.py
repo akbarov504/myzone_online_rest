@@ -325,7 +325,7 @@ def register_socket_handlers(socketio):
                     return {"status": "error", "message": "Student not found"}
                 
                 new_ticket = SupportTicket.query.filter_by(student_id=user.id).first()
-                if not new_ticket and new_ticket.status != "OPEN":
+                if not new_ticket:
                     new_ticket = SupportTicket(student_id=user.id, status="OPEN")
                     db.session.add(new_ticket)
                     db.session.commit()
