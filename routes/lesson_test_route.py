@@ -439,6 +439,9 @@ class LessonTestFinishActionResource(Resource):
         if not progress:
             progress = LessonTestProgress(found_student.id, found_lesson.id, False, 0)
         
+        if progress.is_completed:
+            return get_response("Successfully Finish Lesson Test", None, 200), 200
+
         correct_count = int(correct_count)
         progress.best_score = max(progress.best_score, correct_count)
         if correct_count >= 7:
