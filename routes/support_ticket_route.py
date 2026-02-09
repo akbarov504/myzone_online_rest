@@ -211,6 +211,10 @@ class SupportTicketListCreateResource(Resource):
         if not found_student:
             return get_response("Student not found", None, 404), 404
         
+        found_ticket = SupportTicket.query.filter_by(student_id=found_student.id).first()
+        if found_ticket and found_ticket.status == "OPEN":
+            return get_response("Ticket already exists", None, 200), 200
+        
         new_support_ticket = SupportTicket(found_student.id, "OPEN")
         db.session.add(new_support_ticket)
         db.session.commit()
