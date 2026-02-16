@@ -27,6 +27,7 @@ from utils.utils import super_admin_create
 from routes.auth_route import auth_bp
 from routes.user_route import user_bp
 from routes.type_route import type_bp
+from routes.news_route import news_bp
 from routes.course_route import course_bp
 from routes.lesson_route import lesson_bp
 from routes.language_route import language_bp
@@ -85,7 +86,7 @@ Swagger(app, template={
     "info": {
         "title": "My Zone Online API",
         "description": "API documentation for My Zone Online platform",
-        "version": "1.0.0"
+        "version": "1.1.0"
     }
 })
 
@@ -104,7 +105,7 @@ CORS(
 Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["500 per hour"]
+    default_limits=["300 per hour"]
 )
 
 # ============================================================
@@ -134,6 +135,7 @@ migrate.init_app(app, db)
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(type_bp)
+app.register_blueprint(news_bp)
 app.register_blueprint(course_bp)
 app.register_blueprint(lesson_bp)
 app.register_blueprint(language_bp)

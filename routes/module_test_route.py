@@ -3,12 +3,16 @@ from models import db
 from datetime import date
 from flask import Blueprint
 from models.user import User
+from models.course import Course
+from models.lesson import Lesson
 from utils.utils import get_response
 from models.module_test import ModuleTest
 from utils.decorators import role_required
 from models.course_module import CourseModule
 from models.module_student import ModuleStudent
+from flask_jwt_extended import get_jwt_identity
 from flask_restful import Api, Resource, reqparse
+from models.lesson_test_progress import LessonTestProgress
 from models.module_test_progress import ModuleTestProgress
 
 module_test_create_parse = reqparse.RequestParser()
@@ -461,7 +465,82 @@ class ModuleTestFinishActionResource(Resource):
 
         return get_response("Successfully Finish Module Test", None, 200), 200
 
+class ModuleTestListActionResource(Resource):
+    decorators = [role_required(["STUDENT"])]
+
+    def get(self):
+        """Module Test List Action Get API
+        Path - /api/module_test/list/action
+        Method - GET
+        ---
+        consumes: application/json
+        parameters:
+            - in: header
+              name: Authorization
+              type: string
+              required: true
+              description: Bearer token for authentication
+
+        responses:
+            200:
+                description: List Module
+            404:
+                description: (Student not found) or (Module not found)
+        """
+        username = get_jwt_identity()
+
+        found_student = User.query.filter_by(username=username, role="STUDENT").first()
+        if not found_student:
+            return get_response("Student not found", None, 404), 404
+        
+        module_list = []
+        today_date = date.today()
+        module_student = ModuleStudent.query.filter_by(student_id=found_student.id, date=today_date).first()
+
+        if module_student:
+            course_list = Course.query.filter_by(type_id=found_student.type_id).all()
+            for course in course_list:
+                course_module_list = CourseModule.query.filter_by(course_id=course.id).all()
+                for course_module in course_module_list:
+                    module_test_list = ModuleTest.query.filter_by(module_id=course_module.id).all()
+                    if len(module_test_list) <= 0:
+                        continue
+                    else:
+                        lesson_list = Lesson.query.filter_by(course_module_id=course_module.id).order_by(Lesson.order.asc()).all()
+                        lesson = lesson_list[-1]
+                        lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_student.id, lesson_id=lesson.id, is_completed=True).first()
+                        if lesson_test_progress is None:
+                            result_dict = {
+                                "is_open": False,
+                                "is_passed": False
+                            }
+
+                            result_course_module = CourseModule.to_dict(course_module)
+                            result_dict.update({"module": result_course_module})
+
+                            module_list.append(result_dict)
+                        else:
+                            result_dict = {
+                                "is_open": True
+                            }
+
+                            module_test_progress = ModuleTestProgress.query.filter_by(student_id=found_student.id, module_id=course_module.id, is_completed=True).first()
+                            if module_test_progress is None:
+                                result_dict.update({"is_passed": False})
+                            else:
+                                result_dict.update({"is_passed": True})
+
+                            result_course_module = CourseModule.to_dict(course_module)
+                            result_dict.update({"module": result_course_module})
+
+                            module_list.append(result_dict)
+
+            return get_response("Module List", module_list, 200)
+        else:
+            return get_response("Module List", module_list, 200)
+
 api.add_resource(ModuleTestResource, "/<module_test_id>")
 api.add_resource(ModuleTestListCreateResource, "/module/<module_id>")
 api.add_resource(ModuleTestActionResource, "/action/<module_id>")
 api.add_resource(ModuleTestFinishActionResource, "/finish/action/<student_id>/<module_id>/<correct_count>")
+api.add_resource(ModuleTestListActionResource, "/list/action")
