@@ -497,7 +497,7 @@ class ModuleTestListActionResource(Resource):
         today_date = date.today()
         module_student = ModuleStudent.query.filter_by(student_id=found_student.id, date=today_date).first()
 
-        if module_student:
+        if module_student is None:
             course_list = Course.query.filter_by(type_id=found_student.type_id).all()
             for course in course_list:
                 course_module_list = CourseModule.query.filter_by(course_id=course.id).all()
