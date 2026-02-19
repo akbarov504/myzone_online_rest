@@ -1,10 +1,10 @@
 import random
 from models import db
-from datetime import date
 from flask import Blueprint
 from models.user import User
 from models.course import Course
 from models.lesson import Lesson
+from datetime import date, timedelta
 from utils.utils import get_response
 from models.module_test import ModuleTest
 from utils.decorators import role_required
@@ -458,6 +458,10 @@ class ModuleTestFinishActionResource(Resource):
                     
                     today_date = date.today()
                     new_module_student = ModuleStudent(found_student.id, today_date)
+                    db.session.add(new_module_student)
+
+                    tomorrow_date = today_date + timedelta(days=1)
+                    new_module_student = ModuleStudent(found_student.id, tomorrow_date)
                     db.session.add(new_module_student)
         
         db.session.add(progress)

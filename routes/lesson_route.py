@@ -10,6 +10,7 @@ from models.lesson_student import LessonStudent
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Api, Resource, reqparse
 from models.lesson_test_progress import LessonTestProgress
+from models.module_test_progress import ModuleTestProgress
 
 lesson_create_parse = reqparse.RequestParser()
 lesson_create_parse.add_argument("title", type=str, required=True, help="Title cannot be blank")
@@ -255,6 +256,12 @@ class LessonListCreateResource(Resource):
         today_lesson_student = LessonStudent.query.filter_by(student_id=found_user.id, date=today_date).first()
 
         for lesson in lesson_list:
+            if found_course_module.order >= 6:
+                found_module = CourseModule.query.filter_by(order=5).first()
+                module_test_progress = ModuleTestProgress.query.filter_by(student_id=found_user.id, module_id=found_module.id, is_completed=True).first()
+                if module_test_progress is None:
+                    continue
+
             lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, lesson_id=lesson.id).order_by(LessonTestProgress.created_at.desc()).first()
             
             if lesson_test_progress:
