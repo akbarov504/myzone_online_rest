@@ -259,8 +259,9 @@ class LessonListCreateResource(Resource):
             if found_course_module.order >= 6:
                 found_module = CourseModule.query.filter_by(order=5).first()
                 module_test_progress = ModuleTestProgress.query.filter_by(student_id=found_user.id, module_id=found_module.id, is_completed=True).first()
-                if module_test_progress is None:
-                    continue
+                if found_user.role != "ADMIN":
+                    if module_test_progress is None:
+                        continue
 
             lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, lesson_id=lesson.id).order_by(LessonTestProgress.created_at.desc()).first()
             
