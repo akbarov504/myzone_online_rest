@@ -63,8 +63,8 @@ class CertificateResource(Resource):
             return get_response("Module Test Progress not found", None, 404), 404
 
         result = {
-            "cource": found_course,
-            "student": found_student,
+            "cource": Course.to_dict(found_course),
+            "student": User.to_dict(found_student),
             "is_completed": found_module_test_progress.is_completed,
             "best_score": found_module_test_progress.best_score
         }
