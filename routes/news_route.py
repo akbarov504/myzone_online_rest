@@ -94,7 +94,6 @@ class NewsRecource(Resource):
         db.session.commit()
         return get_response("Successfully created news", new_news.id, 200), 200
 
-
 class NewsDetailRecource(Resource):
 
     @role_required(["ADMIN"])

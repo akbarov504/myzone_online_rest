@@ -34,6 +34,7 @@ from routes.language_route import language_bp
 from routes.module_test_route import module_test_bp
 from routes.lesson_test_route import lesson_test_bp
 from routes.course_save_route import course_save_bp
+from routes.certificate_route import certificate_bp
 from routes.notification_route import notification_bp
 from routes.course_module_route import course_module_bp
 from routes.support_ticket_route import support_ticket_bp
@@ -56,7 +57,7 @@ app.config.update(
     # Security
     SECRET_KEY="dhq34155kjnjhjbu23uy545",
     JWT_SECRET_KEY="dfgsk43jkh3kj4jhv23jdfw4jkh34kjh",
-    JWT_ACCESS_TOKEN_EXPIRES=3600,
+    JWT_ACCESS_TOKEN_EXPIRES=10800,
 
     # Database
     SQLALCHEMY_DATABASE_URI="postgresql://akbarov:akbarov@127.0.0.1:5432/my_zone_online_db",
@@ -142,6 +143,7 @@ app.register_blueprint(language_bp)
 app.register_blueprint(module_test_bp)
 app.register_blueprint(lesson_test_bp)
 app.register_blueprint(course_save_bp)
+app.register_blueprint(certificate_bp)
 app.register_blueprint(notification_bp)
 app.register_blueprint(course_module_bp)
 app.register_blueprint(support_ticket_bp)

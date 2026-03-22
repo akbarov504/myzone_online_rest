@@ -1,21 +1,21 @@
 from models import db
 from flask import Blueprint
+from utils.utils import get_response
+from utils.decorators import role_required
+from flask_bcrypt import generate_password_hash
+from flask_restful import Api, Resource, reqparse
+
 from models.user import User
 from models.course import Course
 from models.lesson import Lesson
-from utils.utils import get_response
-from utils.decorators import role_required
-from models.course_module import CourseModule
-from flask_bcrypt import generate_password_hash
-from flask_restful import Api, Resource, reqparse
-from models.lesson_test_progress import LessonTestProgress
-
 from models.course_save import CourseSave
+from models.course_module import CourseModule
 from models.support_ticket import SupportTicket
 from models.lesson_student import LessonStudent
 from models.meeting_lesson import MeetingLesson
 from models.support_message import SupportMessage
 from models.notification_user import NotificationUser
+from models.lesson_test_progress import LessonTestProgress
 
 user_create_parse = reqparse.RequestParser()
 user_create_parse.add_argument("full_name", type=str, required=True, help="Full Name cannot be blank")
