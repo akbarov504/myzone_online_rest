@@ -70,4 +70,4 @@ class CertificateResource(Resource):
         }
         return get_response("Certificate Details", result, 200), 200
 
-api.add_resource(CertificateResource, "/")
+api.add_resource(CertificateResource, "/<course_id>/<student_id>")
