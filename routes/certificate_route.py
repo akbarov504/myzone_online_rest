@@ -43,7 +43,7 @@ class CertificateResource(Resource):
             200:
                 description: Return a Certificate Details
             404:
-                description: Course not found or Student not found or Module not found or Module Test Progress not found
+                description: Course not found or Student not found or Module Test Progress not found
         """
 
         found_course = Course.query.filter_by(id=course_id).first()
@@ -54,19 +54,19 @@ class CertificateResource(Resource):
         if not found_student or found_student.active_term <= 0:
             return get_response("Student not found", None, 404), 404
         
-        found_module = CourseModule.query.filter_by(course_id=found_course.id, is_active=True).order_by(CourseModule.order.desc()).first()
-        if not found_module:
-            return get_response("Module not found", None, 404), 404
-        
-        found_module_test_progress = ModuleTestProgress.query.filter_by(student_id=found_student.id, module_id=found_module.id, is_completed=True).first()
-        if not found_module_test_progress:
-            return get_response("Module Test Progress not found", None, 404), 404
+        best_score = 0;
+        module_list = CourseModule.query.filter_by(course_id=found_course.id, is_active=True).all()
+        for module in module_list:
+            found_module_test_progress = ModuleTestProgress.query.filter_by(student_id=found_student.id, module_id=module.id, is_completed=True).first()
+            if found_module_test_progress:
+                best_score += found_module_test_progress.best_score
 
+        best_score = best_score * 1.25
         result = {
             "cource": Course.to_dict(found_course),
             "student": User.to_dict(found_student),
-            "is_completed": found_module_test_progress.is_completed,
-            "best_score": found_module_test_progress.best_score
+            "is_completed": True,
+            "best_score": best_score
         }
         return get_response("Certificate Details", result, 200), 200
 
