@@ -43,9 +43,8 @@ class CertificateResource(Resource):
             200:
                 description: Return a Certificate Details
             404:
-                description: Course not found or Student not found or Module Test Progress not found
+                description: Course not found or Student not found or Certificate not found
         """
-
         found_course = Course.query.filter_by(id=course_id).first()
         if not found_course:
             return get_response("Course not found", None, 404), 404
@@ -56,23 +55,28 @@ class CertificateResource(Resource):
         
         best_score = 0
         completed_at = None
+        module_test_progress_total_count = 0
         reg_number = randint(1000, 9999)
         module_list = CourseModule.query.filter_by(course_id=found_course.id, is_active=True).all()
         for module in module_list:
             found_module_test_progress = ModuleTestProgress.query.filter_by(student_id=found_student.id, module_id=module.id, is_completed=True).first()
             if found_module_test_progress:
+                module_test_progress_total_count += 1
                 best_score += found_module_test_progress.best_score
                 completed_at = found_module_test_progress.created_at
 
-        best_score = best_score * 1.25
-        result = {
-            "cource": Course.to_dict(found_course),
-            "student": User.to_dict(found_student),
-            "is_completed": True,
-            "completed_at": str(completed_at),
-            "reg_number": reg_number,
-            "best_score": best_score
-        }
-        return get_response("Certificate Details", result, 200), 200
+        if module_test_progress_total_count > 1:
+            best_score = best_score * 1.25
+            result = {
+                "cource": Course.to_dict(found_course),
+                "student": User.to_dict(found_student),
+                "is_completed": True,
+                "completed_at": str(completed_at),
+                "reg_number": reg_number,
+                "best_score": best_score
+            }
+            return get_response("Certificate Details", result, 200), 200
+        else:
+            return get_response("Certificate not found", None, 404), 404
 
 api.add_resource(CertificateResource, "/<course_id>/<student_id>")
