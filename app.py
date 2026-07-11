@@ -106,7 +106,7 @@ CORS(
 Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["300 per hour"]
+    default_limits=["600 per hour"]
 )
 
 # ============================================================
