@@ -319,6 +319,8 @@ class UserListCreateResource(Resource):
                             continue
                         else:
                             lesson = Lesson.query.filter_by(course_module_id=course_module.id, order=i, is_active=True).first()
+                            if lesson is None:
+                                continue
 
                             new_lesson_test_progress = LessonTestProgress(new_user.id, lesson.id, True, 9)
                             db.session.add(new_lesson_test_progress)
@@ -340,6 +342,8 @@ class UserListCreateResource(Resource):
                             continue
                         else:
                             lesson = Lesson.query.filter_by(course_module_id=course_module.id, order=i, is_active=True).first()
+                            if lesson is None:
+                                continue
 
                             new_lesson_test_progress = LessonTestProgress(new_user.id, lesson.id, True, 9)
                             db.session.add(new_lesson_test_progress)
