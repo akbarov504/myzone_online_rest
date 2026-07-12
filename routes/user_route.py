@@ -318,7 +318,7 @@ class UserListCreateResource(Resource):
                         if i == 38:
                             continue
                         else:
-                            lesson = Lesson.query.filter_by(course_module_id=course_module.id, order=i, is_active=True).first()
+                            lesson = Lesson.query.filter_by(id=i, course_module_id=course_module.id, is_active=True).first()
                             if lesson is None:
                                 continue
 
@@ -341,7 +341,7 @@ class UserListCreateResource(Resource):
                         if i == 38:
                             continue
                         else:
-                            lesson = Lesson.query.filter_by(course_module_id=course_module.id, order=i, is_active=True).first()
+                            lesson = Lesson.query.filter_by(id=i, course_module_id=course_module.id, is_active=True).first()
                             if lesson is None:
                                 continue
 
