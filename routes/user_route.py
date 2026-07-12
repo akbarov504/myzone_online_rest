@@ -15,6 +15,7 @@ from models.lesson_student import LessonStudent
 from models.meeting_lesson import MeetingLesson
 from models.support_message import SupportMessage
 from models.notification_user import NotificationUser
+from models.module_test_progress import ModuleTestProgress
 from models.lesson_test_progress import LessonTestProgress
 
 user_create_parse = reqparse.RequestParser()
@@ -25,6 +26,8 @@ user_create_parse.add_argument("password", type=str, required=True, help="Passwo
 user_create_parse.add_argument("role", type=str, required=True, help="Role cannot be blank")
 user_create_parse.add_argument("active_term", type=int, required=True, help="Active Term cannot be blank")
 user_create_parse.add_argument("type_id", type=int, required=True, help="Type ID cannot be blank")
+user_create_parse.add_argument("access", type=bool)
+user_create_parse.add_argument("open_lesson_count", type=int)
 
 user_update_parse = reqparse.RequestParser()
 user_update_parse.add_argument("full_name", type=str)
@@ -272,6 +275,10 @@ class UserListCreateResource(Resource):
                         type: integer
                     type_id:
                         type: integer
+                    access:
+                        type: boolean
+                    open_lesson_count:
+                        type: integer
                 required: [full_name, phone_number, username, password, role, active_term, type_id]
         responses:
             200:
@@ -287,6 +294,8 @@ class UserListCreateResource(Resource):
         role = data['role']
         active_term = data['active_term']
         type_id = data['type_id']
+        access = data['access']
+        open_lesson_count = data['open_lesson_count']
 
         user = User.query.filter_by(phone_number=phone_number).first()
         if user:
@@ -301,6 +310,45 @@ class UserListCreateResource(Resource):
         db.session.commit()
 
         if role == "STUDENT":
+            if access is not False:
+                course_list = Course.query.filter_by(type_id=type_id, is_active=True).all()
+                for course in course_list:
+                    course_module = CourseModule.query.filter_by(course_id=course.id, order=1, is_active=True).first()
+                    for i in range(1, 42):
+                        if i == 38:
+                            continue
+                        else:
+                            lesson = Lesson.query.filter_by(course_module_id=course_module.id, order=i, is_active=True).first()
+
+                            new_lesson_test_progress = LessonTestProgress(new_user.id, lesson.id, True, 9)
+                            db.session.add(new_lesson_test_progress)
+                    
+                    new_lesson_test_progress_last = LessonTestProgress(new_user.id, 42, False, 0)
+                    db.session.add(new_lesson_test_progress_last)
+
+                    new_module_test_progress = ModuleTestProgress(new_user.id, 6, True, 30)
+                    db.session.add(new_module_test_progress)
+                    
+                db.session.commit()
+
+            if access is False and open_lesson_count > 1:
+                course_list = Course.query.filter_by(type_id=type_id, is_active=True).all()
+                for course in course_list:
+                    course_module = CourseModule.query.filter_by(course_id=course.id, order=1, is_active=True).first()
+                    for i in range(1, open_lesson_count + 1):
+                        if i == 38:
+                            continue
+                        else:
+                            lesson = Lesson.query.filter_by(course_module_id=course_module.id, order=i, is_active=True).first()
+
+                            new_lesson_test_progress = LessonTestProgress(new_user.id, lesson.id, True, 9)
+                            db.session.add(new_lesson_test_progress)
+                    
+                    new_lesson_test_progress_last = LessonTestProgress(new_user.id, open_lesson_count + 1, False, 0)
+                    db.session.add(new_lesson_test_progress_last)
+                    
+                db.session.commit()
+
             course_list = Course.query.filter_by(type_id=type_id, is_active=True).all()
             for course in course_list:
                 course_module = CourseModule.query.filter_by(course_id=course.id, order=1, is_active=True).first()
