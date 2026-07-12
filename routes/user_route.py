@@ -314,11 +314,11 @@ class UserListCreateResource(Resource):
                 course_list = Course.query.filter_by(type_id=type_id, is_active=True).all()
                 for course in course_list:
                     course_module = CourseModule.query.filter_by(course_id=course.id, order=1, is_active=True).first()
-                    for i in range(1, 42):
+                    for i in range(2, 42):
                         if i == 38:
                             continue
                         else:
-                            lesson = Lesson.query.filter_by(id=i, course_module_id=course_module.id, is_active=True).first()
+                            lesson = Lesson.query.filter_by(id=i, is_active=True).first()
                             if lesson is None:
                                 continue
 
@@ -332,16 +332,17 @@ class UserListCreateResource(Resource):
                     db.session.add(new_module_test_progress)
                     
                 db.session.commit()
+                return get_response("Successfully created user", new_user.id, 200), 200
 
             if access is False and open_lesson_count > 1:
                 course_list = Course.query.filter_by(type_id=type_id, is_active=True).all()
                 for course in course_list:
                     course_module = CourseModule.query.filter_by(course_id=course.id, order=1, is_active=True).first()
-                    for i in range(1, open_lesson_count + 1):
+                    for i in range(2, open_lesson_count + 1):
                         if i == 38:
                             continue
                         else:
-                            lesson = Lesson.query.filter_by(id=i, course_module_id=course_module.id, is_active=True).first()
+                            lesson = Lesson.query.filter_by(id=i, is_active=True).first()
                             if lesson is None:
                                 continue
 
@@ -352,6 +353,7 @@ class UserListCreateResource(Resource):
                     db.session.add(new_lesson_test_progress_last)
                     
                 db.session.commit()
+                return get_response("Successfully created user", new_user.id, 200), 200
 
             course_list = Course.query.filter_by(type_id=type_id, is_active=True).all()
             for course in course_list:
