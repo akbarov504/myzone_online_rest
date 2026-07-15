@@ -38,6 +38,7 @@ user_update_parse.add_argument("role", type=str)
 user_update_parse.add_argument("active_term", type=int)
 user_update_parse.add_argument("type_id", type=int)
 user_update_parse.add_argument("is_active", type=bool)
+user_update_parse.add_argument("open_lesson_count", type=int)
 
 user_bp = Blueprint("user", __name__, url_prefix="/api/user")
 api = Api(user_bp)
@@ -73,7 +74,16 @@ class UserResource(Resource):
         if not user:
             return get_response("User not found", None, 404), 404
         
-        return get_response("User successfully found", User.to_dict(user), 200), 200
+        open_lesson_count = 1
+        found_lesson_test_progress = LessonTestProgress.query.filter_by(student_id=user.id, is_completed=False).first()
+
+        if found_lesson_test_progress is not None:
+            open_lesson_count = found_lesson_test_progress.lesson_id - 1
+
+        result = User.to_dict(user)
+        result["open_lesson_count"] = open_lesson_count
+        
+        return get_response("User successfully found", result, 200), 200
 
     @role_required(["ADMIN"])
     def delete(self, user_id):
