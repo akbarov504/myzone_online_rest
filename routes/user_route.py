@@ -248,6 +248,10 @@ class UserResource(Resource):
                     new_lesson_test_progress_last = LessonTestProgress(found_user.id, open_lesson_count + 1, False, 0)
                     db.session.add(new_lesson_test_progress_last)
 
+                    if open_lesson_count + 1 > 24:
+                        new_module_test_progress = ModuleTestProgress(found_user.id, 6, True, 30)
+                        db.session.add(new_module_test_progress) 
+
         db.session.commit()
         return get_response("Successfully updated user", None, 200), 200
 
