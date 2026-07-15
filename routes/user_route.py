@@ -188,6 +188,8 @@ class UserResource(Resource):
                         type: integer
                     is_active:
                         type: boolean
+                    open_lesson_count:
+                        type: integer
         responses:
             200:
                 description: Successfully updated user
@@ -207,7 +209,7 @@ class UserResource(Resource):
         active_term = data.get('active_term', None)
         type_id = data.get('type_id', None)
         is_active = data.get('is_active', None)
-
+        open_lesson_count = data.get('open_lesson_count', None)
         if full_name is not None:
             found_user.full_name = full_name
         if phone_number is not None:
@@ -224,6 +226,27 @@ class UserResource(Resource):
             found_user.type_id = type_id
         if is_active is not None:
             found_user.is_active = is_active
+        if open_lesson_count is not None:
+            found_lesson_test_progress = LessonTestProgress.query.filter_by(student_id=found_user.id, is_completed=False).first()
+            if found_lesson_test_progress is not None:
+                if open_lesson_count > found_lesson_test_progress.lesson_id - 1:
+                    lesson_test_progress_list = LessonTestProgress.query.filter_by(student_id=found_user.id).all()
+                    for lesson_test_progress in lesson_test_progress_list:
+                        db.session.delete(lesson_test_progress)
+                    
+                    for i in range(2, open_lesson_count + 1):
+                        if i == 38:
+                            continue
+                        else:
+                            lesson = Lesson.query.filter_by(id=i, is_active=True).first()
+                            if lesson is None:
+                                continue
+
+                            new_lesson_test_progress = LessonTestProgress(found_user.id, lesson.id, True, 9)
+                            db.session.add(new_lesson_test_progress)
+                        
+                    new_lesson_test_progress_last = LessonTestProgress(found_user.id, open_lesson_count + 1, False, 0)
+                    db.session.add(new_lesson_test_progress_last)
 
         db.session.commit()
         return get_response("Successfully updated user", None, 200), 200
