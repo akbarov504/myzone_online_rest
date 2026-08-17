@@ -11,6 +11,8 @@ from flask_jwt_extended import get_jwt_identity
 from flask_restful import Api, Resource, reqparse
 from models.lesson_test_progress import LessonTestProgress
 from models.module_test_progress import ModuleTestProgress
+from pollings.transcoder_polling import poll_transcode_job
+from services.transcoder_service import (firebase_url_to_gcs_uri, create_transcode_job)
 
 lesson_create_parse = reqparse.RequestParser()
 lesson_create_parse.add_argument("title", type=str, required=True, help="Title cannot be blank")
@@ -351,8 +353,23 @@ class LessonListCreateResource(Resource):
             return get_response("Lesson Title already exists", None, 400), 400
         
         new_lesson = Lesson(found_course_module.id, title, description, video_url, content, duration, order, cover_url)
+        new_lesson.transcode_status = "PROCESSING"
         db.session.add(new_lesson)
         db.session.commit()
+
+        try:
+            gcs_input_uri = firebase_url_to_gcs_uri(video_url)
+            job_name = create_transcode_job(gcs_input_uri, new_lesson.id)
+            new_lesson.transcode_job_name = job_name
+            db.session.commit()
+            print(f"[transcoder] job yaratildi: lesson_id={new_lesson.id}, job_name={job_name}")
+            from app import app
+            poll_transcode_job(app, new_lesson.id, job_name)
+        except Exception as e:
+            new_lesson.transcode_status = "FAILED"
+            db.session.commit()
+            print(f"[transcoder] job yaratishda xato: {e}")
+          
         return get_response("Successfully created lesson", new_lesson.id, 200), 200
 
 api.add_resource(LessonResource, "/<lesson_id>")

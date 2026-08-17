@@ -18,6 +18,8 @@ class Lesson(db.Model):
     order = db.Column(db.Integer(), nullable=False)
     cover_url = db.Column(db.Text(), nullable=False)
     is_active = db.Column(db.Boolean(), default=True)
+    transcode_status = db.Column(db.Text, nullable=True)
+    transcode_job_name = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime(), default=lambda: datetime.now(time_zone))
 
@@ -45,6 +47,8 @@ class Lesson(db.Model):
             "order": lesson.order,
             "cover_url": lesson.cover_url,
             "is_active": lesson.is_active,
+            "transcode_status": lesson.transcode_status,
+            "transcode_job_name": lesson.transcode_job_name,
             "created_at": str(lesson.created_at)
         }
         return _
