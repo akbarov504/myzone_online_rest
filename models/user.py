@@ -18,6 +18,7 @@ class User(db.Model):
     active_term = db.Column(db.Integer(), nullable=False)
     type_id = db.Column(db.Integer(), db.ForeignKey("type.id"), nullable=False)
     is_active = db.Column(db.Boolean(), default=True)
+    profile_image = db.Column(db.Text, default="https://firebasestorage.googleapis.com/v0/b/kamronlessonbot.appspot.com/o/aiconnect%2Fprofile_pic%2Fprofile_pic_default.jpg?alt=media&token=16ef7f25-c58f-4010-8682-daa83e10e229")
 
     created_at = db.Column(db.DateTime(), default=lambda: datetime.now(time_zone))
 
@@ -42,6 +43,7 @@ class User(db.Model):
             "active_term": user.active_term,
             "type_id": user.type_id,
             "is_active": user.is_active,
+            "profile_image": user.profile_image,
             "created_at": str(user.created_at)
         }
         return _

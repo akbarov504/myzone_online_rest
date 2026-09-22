@@ -57,7 +57,8 @@ class AuthResource(Resource):
             "user_id": user.id,
             "role": user.role,
             "type_id": user.type_id,
-            "access_token": access_token
+            "access_token": access_token,
+            "profile_image": user.profile_image
         }
         return get_response("Successfully Logged in!", result_data, 200), 200
 
