@@ -79,4 +79,48 @@ class CertificateResource(Resource):
         else:
             return get_response("Certificate not found", None, 404), 404
 
+class CertificateDetailResource(Resource):
+    def get(self, student_id):
+        """Certificate Detail API
+        Path - /api/certificate/<student_id>
+        Method - GET
+        ---
+        consumes: application/json
+        parameters:
+            - name: student_id
+              in: path
+              type: integer
+              required: true
+              description: Enter Student ID
+        responses:
+            200:
+                description: Return a Certificate Details
+            404:
+                description: Student not found or Course not found
+        """    
+        found_student = User.query.filter_by(id=student_id).first()
+        if not found_student:
+            return get_response("Student not found", None, 404), 404
+
+        found_course = Course.query.filter_by(type_id=found_student.type_id, is_active=True).first()
+        if not found_course:
+            return get_response("Course not found", None, 404), 404
+
+        list_module_test_progress = ModuleTestProgress.query.filter_by(student_id=found_student.id, is_completed=True).order_by(ModuleTestProgress.created_at).all()
+        exam_result = 0
+        for module_test_progress in list_module_test_progress:
+            exam_result += (module_test_progress.best_score * 1.25)
+
+        result = {
+            "full_name": found_student.full_name,
+            "course_title": found_course.title,
+            "start_date": str(found_student.created_at.date()),
+            "end_date": str(list_module_test_progress[-1].created_at.date()) if list_module_test_progress else None,
+            "exam_count": len(list_module_test_progress),
+            "exam_result": exam_result
+        }
+        
+        return get_response("Certificate Details", result, 200), 200
+
 api.add_resource(CertificateResource, "/<course_id>/<student_id>")
+api.add_resource(CertificateDetailResource, "/<student_id>")

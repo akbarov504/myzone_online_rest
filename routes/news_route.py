@@ -24,7 +24,7 @@ api = Api(news_bp)
 
 class NewsRecource(Resource):
 
-    @role_required(["ADMIN", "STUDENT"])
+    @role_required(["ADMIN", "STUDENT", "TEACHER"])
     def get(self):
         """News List API
         Path - /api/news
@@ -45,7 +45,7 @@ class NewsRecource(Resource):
         result_news_list = [News.to_dict(news) for news in news_list]
         return get_response("News List", result_news_list, 200), 200
     
-    @role_required(["ADMIN"])
+    @role_required(["ADMIN", "TEACHER"])
     def post(self):
         """News Create API
         Path - /api/news
@@ -96,7 +96,7 @@ class NewsRecource(Resource):
 
 class NewsDetailRecource(Resource):
 
-    @role_required(["ADMIN"])
+    @role_required(["ADMIN", "TEACHER"])
     def patch(self, news_id):
         """News Update API
         Path - /api/news/<news_id>
@@ -163,7 +163,7 @@ class NewsDetailRecource(Resource):
         db.session.commit()
         return get_response("Successfully updated news", None, 200), 200
     
-    @role_required(["ADMIN"])
+    @role_required(["ADMIN", "TEACHER"])
     def delete(self, news_id):
         """News Delete API
         Path - /api/news/<news_id>
@@ -196,7 +196,7 @@ class NewsDetailRecource(Resource):
         db.session.commit()
         return get_response("Successfully deleted news", None, 200), 200
     
-    @role_required(["ADMIN", "STUDENT"])
+    @role_required(["ADMIN", "STUDENT", "TEACHER"])
     def get(self, news_id):
         """News Get API
         Path - /api/news/<news_id>
