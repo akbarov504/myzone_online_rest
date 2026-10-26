@@ -134,7 +134,7 @@ class TypeResource(Resource):
 
 class TypeListCreateResource(Resource):
     
-    @role_required(["ADMIN", "STUDENT"])
+    @role_required(["ADMIN", "STUDENT", "TEACHER"])
     def get(self):
         """Type List API
         Path - /api/type
