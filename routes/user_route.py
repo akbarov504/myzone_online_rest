@@ -404,5 +404,55 @@ class UserListCreateResource(Resource):
 
         return get_response("Successfully created user", new_user.id, 200), 200
 
+class UserDetailResource(Resource):    
+    @role_required(["ADMIN", "TEACHER"])
+    def get(self, user_id):
+        """User Get Detail API
+        Path - /api/user/detail/<user_id>
+        Method - GET
+        ---
+        consumes: application/json
+        parameters:
+            - in: header
+              name: Authorization
+              type: string
+              required: true
+              description: Bearer token for authentication
+
+            - name: user_id
+              in: path
+              type: integer
+              required: true
+              description: Enter User ID
+        responses:
+            200:
+                description: Return a User
+            404:
+                description: User not found or Course not found
+        """
+        user = User.query.filter_by(id=user_id).first()
+        if not user:
+            return get_response("User not found", None, 404), 404
+
+        found_course = Course.query.filter_by(type_id=user.type_id, is_active=True).first()
+        if not found_course:
+            return get_response("Course not found", None, 404), 404
+
+        list_module_test_progress = ModuleTestProgress.query.filter_by(student_id=user.id, is_completed=True).all()
+        list_lesson_test_progress = LessonTestProgress.query.filter_by(student_id=user.id).all()
+        
+        result = {
+            "user": User.to_dict(user),
+            "course": {
+                "id": found_course.id,
+                "name": found_course.name,
+                "description": found_course.description
+            },
+            "module_test_progress": [ModuleTestProgress.to_dict(module_test_progress) for module_test_progress in list_module_test_progress],
+            "lesson_test_progress": [LessonTestProgress.to_dict(lesson_test_progress) for lesson_test_progress in list_lesson_test_progress]
+        }
+        return get_response("User successfully found", result, 200), 200
+
 api.add_resource(UserResource, "/<user_id>")
 api.add_resource(UserListCreateResource, "/")
+api.add_resource(UserDetailResource, "/detail/<user_id>")
