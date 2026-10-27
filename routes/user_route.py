@@ -445,7 +445,7 @@ class UserDetailResource(Resource):
             "user": User.to_dict(user),
             "course": {
                 "id": found_course.id,
-                "name": found_course.name,
+                "title": found_course.title,
                 "description": found_course.description
             },
             "module_test_progress": [ModuleTestProgress.to_dict(module_test_progress) for module_test_progress in list_module_test_progress],
