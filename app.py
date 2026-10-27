@@ -42,6 +42,8 @@ from routes.meeting_lesson_route import meeting_lesson_bp
 from routes.course_content_route import course_content_bp
 from routes.lesson_material_route import lesson_material_bp
 from routes.notification_user_route import notification_user_bp
+from routes.user_payment_route import user_payment_bp
+from routes.payment_route import payment_bp
 
 # ============================================================
 # CREATE FLASK APP
@@ -151,6 +153,8 @@ app.register_blueprint(meeting_lesson_bp)
 app.register_blueprint(course_content_bp)
 app.register_blueprint(lesson_material_bp)
 app.register_blueprint(notification_user_bp)
+app.register_blueprint(user_payment_bp)
+app.register_blueprint(payment_bp)
 
 # ============================================================
 # SOCKET HANDLERS (ALOHIDA FAYLDAN)
