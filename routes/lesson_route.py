@@ -216,7 +216,7 @@ class LessonResource(Resource):
 
 class LessonListCreateResource(Resource):
 
-    @role_required(["ADMIN", "STUDENT"])
+    @role_required(["ADMIN", "STUDENT", "TEACHER"])
     def get(self, course_module_id):
         """Lesson List API
         Path - /api/lesson/course_module/<course_module_id>
