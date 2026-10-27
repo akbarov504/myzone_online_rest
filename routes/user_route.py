@@ -17,6 +17,7 @@ from models.support_message import SupportMessage
 from models.notification_user import NotificationUser
 from models.module_test_progress import ModuleTestProgress
 from models.lesson_test_progress import LessonTestProgress
+from models.user_payment import UserPayment
 
 user_create_parse = reqparse.RequestParser()
 user_create_parse.add_argument("full_name", type=str, required=True, help="Full Name cannot be blank")
@@ -28,6 +29,7 @@ user_create_parse.add_argument("active_term", type=int, required=True, help="Act
 user_create_parse.add_argument("type_id", type=int, required=True, help="Type ID cannot be blank")
 user_create_parse.add_argument("access", type=bool)
 user_create_parse.add_argument("open_lesson_count", type=int)
+user_create_parse.add_argument("discount", type=float)
 
 user_update_parse = reqparse.RequestParser()
 user_update_parse.add_argument("full_name", type=str)
@@ -333,6 +335,7 @@ class UserListCreateResource(Resource):
         type_id = data['type_id']
         access = data['access']
         open_lesson_count = data['open_lesson_count']
+        discount = data.get('discount') or 0
 
         user = User.query.filter_by(phone_number=phone_number).first()
         if user:
@@ -347,6 +350,25 @@ class UserListCreateResource(Resource):
         db.session.commit()
 
         if role == "STUDENT":
+            base_price = 2_000_000
+            calculated_price = base_price - (base_price * discount / 100)
+
+            new_user_payment = UserPayment(
+                user_id=new_user.id,
+                full_name=new_user.full_name,
+                phone_number=new_user.phone_number,
+                username=new_user.username,
+                role=new_user.role,
+                active_term=new_user.active_term,
+                type_id=new_user.type_id,
+                is_active=new_user.is_active,
+                profile_image=new_user.profile_image,
+                discount=discount,
+                course_price=calculated_price,
+            )
+            db.session.add(new_user_payment)
+            db.session.commit()
+
             if access is not False:
                 course_list = Course.query.filter_by(type_id=type_id, is_active=True).all()
                 for course in course_list:

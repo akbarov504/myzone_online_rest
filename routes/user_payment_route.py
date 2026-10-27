@@ -128,6 +128,7 @@ class UserPaymentResource(Resource):
 
         if discount is not None:
             found_user_payment.discount = discount
+            found_user_payment.course_price = 2_000_000 - (2_000_000 * discount / 100)
         if course_price is not None:
             found_user_payment.course_price = course_price
 
