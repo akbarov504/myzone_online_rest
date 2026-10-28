@@ -427,7 +427,7 @@ class UserListCreateResource(Resource):
         return get_response("Successfully created user", new_user.id, 200), 200
 
 class UserDetailResource(Resource):    
-    @role_required(["ADMIN", "TEACHER"])
+    @role_required(["ADMIN", "SUPPORT"])
     def get(self, user_id):
         """User Get Detail API
         Path - /api/user/detail/<user_id>
