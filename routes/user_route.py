@@ -47,7 +47,7 @@ api = Api(user_bp)
 
 class UserResource(Resource):    
 
-    @role_required(["ADMIN", "TEACHER", "STUDENT", "SUPPORT"])
+    @role_required(["ADMIN", "TEACHER", "STUDENT", "SUPPORT", "OPERATOR"])
     def get(self, user_id):
         """User Get API
         Path - /api/user/<user_id>
@@ -87,7 +87,7 @@ class UserResource(Resource):
         
         return get_response("User successfully found", result, 200), 200
 
-    @role_required(["ADMIN"])
+    @role_required(["ADMIN", "OPERATOR"])
     def delete(self, user_id):
         """User Delete API
         Path - /api/user/<user_id>
@@ -148,7 +148,7 @@ class UserResource(Resource):
         db.session.commit()
         return get_response("Successfully deleted user", None, 200), 200
     
-    @role_required(["ADMIN", "TEACHER", "STUDENT", "SUPPORT"])
+    @role_required(["ADMIN", "TEACHER", "STUDENT", "SUPPORT", "OPERATOR"])
     def patch(self, user_id):
         """User Update API
         Path - /api/user/<user_id>
@@ -258,7 +258,7 @@ class UserResource(Resource):
         return get_response("Successfully updated user", None, 200), 200
 
 class UserListCreateResource(Resource):
-    decorators = [role_required(["ADMIN", "SUPPORT", "TEACHER"])]
+    decorators = [role_required(["ADMIN", "SUPPORT", "TEACHER", "OPERATOR"])]
 
     def get(self):
         """Student List API

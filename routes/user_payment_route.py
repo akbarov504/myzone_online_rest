@@ -19,7 +19,7 @@ user_payment_bp = Blueprint("user_payment", __name__, url_prefix="/api/user_paym
 api = Api(user_payment_bp)
 
 class UserPaymentResource(Resource):
-    decorators = [role_required(["ADMIN"])]
+    decorators = [role_required(["ADMIN", "OPERATOR"])]
 
     def get(self, user_payment_id):
         """UserPayment Get API
@@ -136,7 +136,7 @@ class UserPaymentResource(Resource):
         return get_response("Successfully updated user payment", None, 200), 200
 
 class UserPaymentListCreateResource(Resource):
-    decorators = [role_required(["ADMIN"])]
+    decorators = [role_required(["ADMIN", "OPERATOR"])]
 
     def get(self):
         """UserPayment List API
