@@ -19,7 +19,7 @@ payment_bp = Blueprint("payment", __name__, url_prefix="/api/payment")
 api = Api(payment_bp)
 
 class PaymentResource(Resource):
-    decorators = [role_required(["ADMIN"])]
+    decorators = [role_required(["ADMIN", "OPERATOR"])]
 
     def get(self, payment_id):
         """Payment Get API
@@ -135,7 +135,7 @@ class PaymentResource(Resource):
         return get_response("Successfully updated payment", None, 200), 200
 
 class PaymentListCreateResource(Resource):
-    decorators = [role_required(["ADMIN"])]
+    decorators = [role_required(["ADMIN", "OPERATOR"])]
 
     def get(self):
         """Payment List API
@@ -211,7 +211,7 @@ class PaymentListCreateResource(Resource):
         return get_response("Successfully created payment", new_payment.id, 200), 200
 
 class PaymentByUserPaymentResource(Resource):
-    decorators = [role_required(["ADMIN"])]
+    decorators = [role_required(["ADMIN", "OPERATOR"])]
 
     def get(self, user_payment_id):
         """Payment List By UserPayment API
