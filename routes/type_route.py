@@ -17,7 +17,7 @@ type_bp = Blueprint("type", __name__, url_prefix="/api/type")
 api = Api(type_bp)
 
 class TypeResource(Resource):
-    decorators = [role_required(["ADMIN"])]
+    decorators = [role_required(["ADMIN", "OPERATOR"])]
 
     def get(self, type_id):
         """Type Get API
@@ -134,7 +134,7 @@ class TypeResource(Resource):
 
 class TypeListCreateResource(Resource):
     
-    @role_required(["ADMIN", "STUDENT", "SUPPORT"])
+    @role_required(["ADMIN", "STUDENT", "SUPPORT", "OPERATOR"])
     def get(self):
         """Type List API
         Path - /api/type
@@ -156,7 +156,7 @@ class TypeListCreateResource(Resource):
         result_type_list = [Type.to_dict(type) for type in type_list]
         return get_response("Type List", result_type_list, 200), 200
 
-    @role_required(["ADMIN"])
+    @role_required(["ADMIN", "OPERATOR"])
     def post(self):
         """Type Create API
         Path - /api/type
