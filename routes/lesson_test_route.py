@@ -3,10 +3,12 @@ from models import db
 from datetime import date
 from flask import Blueprint
 from models.user import User
+from models.course import Course
 from models.lesson import Lesson
 from utils.utils import get_response
 from models.lesson_test import LessonTest
 from utils.decorators import role_required
+from models.course_module import CourseModule
 from models.lesson_student import LessonStudent
 from flask_restful import Api, Resource, reqparse
 from models.lesson_test_progress import LessonTestProgress
@@ -434,7 +436,29 @@ class LessonTestFinishActionResource(Resource):
         found_lesson = Lesson.query.filter_by(id=lesson_id).first()
         if not found_lesson:
             return get_response("Lesson not found", None, 404), 404
-        
+
+        found_course_module = CourseModule.query.filter_by(id=found_lesson.course_module_id).first()
+        if not found_course_module:
+            return get_response("Course Module not found", None, 404), 404
+
+        found_course = Course.query.filter_by(id=found_course_module.course_id, type_id=found_student.type_id).first()
+        if not found_course:
+            return get_response("Course not found", None, 404), 404
+
+        course_module_id = None
+        found_next_lesson = Lesson.query.filter(Lesson.order == (found_lesson.order + 1) and Lesson.course_module_id == found_lesson.course_module_id).first()
+        if not found_next_lesson:
+            course_module_list = CourseModule.query.filter_by(course_id=found_course.id).all()
+            counter = 1
+            for course_module in course_module_list:
+                found_next_course_module = CourseModule.query.filter(CourseModule.order == (found_course_module.order + counter) and CourseModule.course_id == found_course.id).first()
+                if found_next_course_module:
+                    course_module_id = found_next_course_module.id
+                    break
+                counter += 1
+        else:
+            course_module_id = found_lesson.course_module_id
+
         progress = LessonTestProgress.query.filter_by(student_id=found_student.id, lesson_id=found_lesson.id).first()
         if not progress:
             progress = LessonTestProgress(found_student.id, found_lesson.id, False, 0)
@@ -446,7 +470,7 @@ class LessonTestFinishActionResource(Resource):
         progress.best_score = max(progress.best_score, correct_count)
         if correct_count >= 7:
             progress.is_completed = True
-            next_lesson = Lesson.query.filter(Lesson.order == found_lesson.order + 1).first()
+            next_lesson = Lesson.query.filter(Lesson.order == (found_lesson.order + 1) and Lesson.course_module_id == course_module_id).first()
 
             if next_lesson:
                 found_progress = LessonTestProgress.query.filter_by(student_id=found_student.id, lesson_id=next_lesson.id, is_completed=False).first()
