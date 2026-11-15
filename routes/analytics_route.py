@@ -437,22 +437,182 @@ class AnalyticsResource(Resource):
         Path - /api/analytics
         Method - GET
         ---
-        consumes: application/json
+        tags:
+          - Analytics
+        summary: Platform analytics and KPI dashboard
+        description: Returns platform statistics including total revenue, active students, course completion rate, teacher activity, registration/enrollment growth, top courses, and live activity stream. Accessible only by ADMIN.
+        produces:
+          - application/json
         parameters:
-            - in: header
-              name: Authorization
-              type: string
-              required: true
-              description: Bearer token for authentication
-
-            - in: query
-              name: period
-              type: string
-              required: false
-              description: "monthly (default) | weekly | yearly"
+          - in: header
+            name: Authorization
+            type: string
+            required: true
+            description: Bearer token for authentication (e.g. 'Bearer <token>')
+          - in: query
+            name: period
+            type: string
+            required: false
+            enum: ["monthly", "weekly", "yearly"]
+            default: "monthly"
+            description: Platform growth breakdown period
         responses:
-            200:
-                description: Return analytics dashboard data
+          200:
+            description: Platform analytics data successfully retrieved
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    total_revenue:
+                      type: object
+                      properties:
+                        amount:
+                          type: number
+                          example: 842500000
+                        total:
+                          type: number
+                          example: 842500000
+                        current_month:
+                          type: number
+                          example: 65000000
+                        currency:
+                          type: string
+                          example: "UZS"
+                        percentage_change:
+                          type: number
+                          example: 12.4
+                    active_students:
+                      type: object
+                      properties:
+                        count:
+                          type: integer
+                          example: 14290
+                        new_this_month:
+                          type: integer
+                          example: 320
+                        percentage_change:
+                          type: number
+                          example: 8.6
+                    completion_rate:
+                      type: object
+                      properties:
+                        percentage:
+                          type: number
+                          example: 68.4
+                        percentage_change:
+                          type: number
+                          example: 2.1
+                        completed_count:
+                          type: integer
+                          example: 9782
+                        total_count:
+                          type: integer
+                          example: 14290
+                    teacher_activity:
+                      type: object
+                      properties:
+                        active_teachers:
+                          type: integer
+                          example: 85
+                        total_teachers:
+                          type: integer
+                          example: 92
+                        active_this_month:
+                          type: integer
+                          example: 72
+                        activity_rate:
+                          type: number
+                          example: 92.1
+                        percentage_change:
+                          type: number
+                          example: 4.5
+                    certificates:
+                      type: object
+                      properties:
+                        total:
+                          type: integer
+                          example: 9782
+                        this_month:
+                          type: integer
+                          example: 148
+                        percentage_change:
+                          type: number
+                          example: 5.2
+                    platform_growth:
+                      type: object
+                      properties:
+                        period:
+                          type: string
+                          example: "monthly"
+                        data:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              month:
+                                type: string
+                                example: "2026-10"
+                              registrations:
+                                type: integer
+                                example: 2800
+                              enrollments:
+                                type: integer
+                                example: 2300
+                    top_performing_courses:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: "Advanced React Patterns"
+                          students_count:
+                            type: integer
+                            example: 1250
+                          revenue:
+                            type: number
+                            example: 124500000
+                          completion_rate:
+                            type: number
+                            example: 94
+                    live_activity:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          type:
+                            type: string
+                            example: "payment"
+                          title:
+                            type: string
+                            example: "Payment Received"
+                          description:
+                            type: string
+                            example: "A student made a course payment"
+                          user_name:
+                            type: string
+                            example: "John Doe"
+                          amount:
+                            type: number
+                            example: 1500000
+                          created_at:
+                            type: string
+                            example: "2026-10-31T10:15:00Z"
+          401:
+            description: Unauthorized - Token is missing or invalid
+          403:
+            description: Permission denied - Only ADMIN role can access
         """
         period = request.args.get("period", "monthly")
         if period not in ("monthly", "weekly", "yearly"):
@@ -473,6 +633,7 @@ class AnalyticsResource(Resource):
 
         data = {
             "total_revenue": {
+                "amount": revenue["total"],
                 "total": revenue["total"],
                 "current_month": revenue["current_month"],
                 "currency": revenue["currency"],
@@ -487,6 +648,7 @@ class AnalyticsResource(Resource):
 
             "completion_rate": {
                 "percentage": completion["percentage"],
+                "percentage_change": completion.get("percentage_change", 0.0),
                 "completed_count": completion["completed_count"],
                 "total_count": completion["total_count"]
             },
@@ -495,7 +657,8 @@ class AnalyticsResource(Resource):
                 "active_teachers": teachers["active_teachers"],
                 "total_teachers": teachers["total_teachers"],
                 "active_this_month": teachers["active_this_month"],
-                "activity_rate": teachers["activity_rate"]
+                "activity_rate": teachers["activity_rate"],
+                "percentage_change": teachers.get("percentage_change", 0.0)
             },
 
             "certificates": {
