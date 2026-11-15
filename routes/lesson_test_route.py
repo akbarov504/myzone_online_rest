@@ -314,7 +314,7 @@ class LessonTestActionResource(Resource):
             return get_response("Lesson not found", None, 404), 404
         
         lesson_test_list = LessonTest.query.filter_by(lesson_id=found_lesson.id).all()
-        lesson_test_random_list = random.sample(lesson_test_list, 10)
+        lesson_test_random_list = random.sample(lesson_test_list, min(10, len(lesson_test_list)))
 
         result_lesson_test_random_list = [LessonTest.to_dict(lesson_test) for lesson_test in lesson_test_random_list]
         return get_response("Lesson Test successfully found", result_lesson_test_random_list, 200), 200
@@ -446,12 +446,18 @@ class LessonTestFinishActionResource(Resource):
             return get_response("Course not found", None, 404), 404
 
         course_module_id = None
-        found_next_lesson = Lesson.query.filter(Lesson.order == (found_lesson.order + 1) and Lesson.course_module_id == found_lesson.course_module_id).first()
+        found_next_lesson = Lesson.query.filter(
+            Lesson.order == (found_lesson.order + 1),
+            Lesson.course_module_id == found_lesson.course_module_id
+        ).first()
         if not found_next_lesson:
             course_module_list = CourseModule.query.filter_by(course_id=found_course.id).all()
             counter = 1
             for course_module in course_module_list:
-                found_next_course_module = CourseModule.query.filter(CourseModule.order == (found_course_module.order + counter) and CourseModule.course_id == found_course.id).first()
+                found_next_course_module = CourseModule.query.filter(
+                    CourseModule.order == (found_course_module.order + counter),
+                    CourseModule.course_id == found_course.id
+                ).first()
                 if found_next_course_module:
                     course_module_id = found_next_course_module.id
                     break
@@ -470,7 +476,10 @@ class LessonTestFinishActionResource(Resource):
         progress.best_score = max(progress.best_score, correct_count)
         if correct_count >= 7:
             progress.is_completed = True
-            next_lesson = Lesson.query.filter(Lesson.order == (found_lesson.order + 1) and Lesson.course_module_id == course_module_id).first()
+            next_lesson = Lesson.query.filter(
+                Lesson.order == (found_lesson.order + 1),
+                Lesson.course_module_id == course_module_id
+            ).first()
 
             if next_lesson:
                 found_progress = LessonTestProgress.query.filter_by(student_id=found_student.id, lesson_id=next_lesson.id, is_completed=False).first()

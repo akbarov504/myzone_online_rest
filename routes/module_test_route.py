@@ -317,7 +317,7 @@ class ModuleTestActionResource(Resource):
             return get_response("Module not found", None, 404), 404
         
         module_test_list = ModuleTest.query.filter_by(module_id=found_module.id).all()
-        module_test_random_list = random.sample(module_test_list, 40)
+        module_test_random_list = random.sample(module_test_list, min(40, len(module_test_list)))
 
         result_module_test_random_list = [ModuleTest.to_dict(module_test) for module_test in module_test_random_list]
         return get_response("Module Test successfully found", result_module_test_random_list, 200), 200

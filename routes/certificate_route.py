@@ -14,7 +14,7 @@ api = Api(certificate_bp)
 
 class CertificateResource(Resource):
 
-    @role_required("STUDENT")
+    @role_required(["STUDENT"])
     def get(self, course_id, student_id):
         """Certificate Get API
         Path - /api/certificate/<course_id>/<student_id>
